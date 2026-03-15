@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BAMBINO CPU</title>
+<style>
+body{
+  font-family: Arial;
+  font-size: 18px;
+  padding: 20px;
+  text-align: center;
+}
+.logo{
+  width: 200px;
+  display: block;
+  margin: auto;
+  margin-bottom: 15px;
+}
+h1{font-size: 32px; margin-bottom: 5px;}
+.date{
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 25px;
+}
+.tab-buttons{
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+.tab-buttons button{
+  font-size: 18px;
+  padding: 8px 16px;
+}
+
+/* Form rows */
+.row{
+  display: grid;
+  grid-template-columns: auto 70px 90px 70px 120px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  max-width: 650px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ingredientBox{ text-align:left; }
+.ingredient{ font-weight:600; }
+.unit{ font-size:14px; color:#666; margin-top:4px; }
+input, .row button{ height:38px; font-size:18px; }
+input#chefName{ width:250px; font-size:20px; margin-bottom:20px; }
+
+/* Status colors */
+.status-out{ color:red; font-weight:600; }
+.status-low{ color:orange; font-weight:600; }
+.status-good{ color:green; font-weight:600; }
+
+/* Display boxes */
+.displayRow{
+  display:grid;
+  grid-template-columns:auto 90px 90px 90px;
+  gap:12px;
+  max-width:650px;
+  margin:auto;
+  margin-bottom:10px;
+  text-align:left;
+}
+
+/* Buttons */
+#submitStockBtn{
+  font-size:22px;
+  padding:8px 16px;
+  margin-top:15px;
+}
+#fillNewFormBtn{
+  font-size:18px;
+  margin-top:15px;
+  display:none;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  .row{grid-template-columns:auto 60px 80px 60px 100px;}
+  input, .row button{height:34px; font-size:16px;}
+  input#chefName{width:200px; font-size:18px; margin-bottom:15px;}
+}
+</style>
+</head>
+<body>
+
+<img src="icon.png" class="logo">
+<h1>BAMBINO CPU</h1>
+<div id="todayDate" class="date"></div>
+
+<div class="tab-buttons">
+  <button onclick="showTab('stockForm')">Stock Form</button>
+  <button onclick="showTab('stockLevel')">Stock Level</button>
+  <button onclick="showTab('tomorrowProduction')">Tomorrow's Production</button>
+  <button onclick="showTab('recommendedPurchase')">Recommended Purchase</button>
+</div>
+
+<div id="tabContainer"></div>
+<button id="fillNewFormBtn" onclick="fillNewForm()">Fill New Form</button>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhg6r9x28g6LxYGaP1GypwedARxUUXtA11zbH0nqpDNECExniny--uukf-Fo3STJe0ow/exec";
+
+function setDate(){
+  const today = new Date();
+  const options = { weekday:'long', day:'numeric', month:'long' };
+  document.getElementById("todayDate").innerText = today.toLocaleDateString('en-GB',options);
+}
+setDate();
+
+function showTab(tab){
+  const container = document.getElementById("tabContainer");
+  container.innerHTML="";
+  document.getElementById("fillNewFormBtn").style.display="none";
+
+  if(tab==='stockForm'){ loadStockForm(); }
+  else if(tab==='stockLevel'){ loadCurrentStock(); }
+  else if(tab==='tomorrowProduction'){ loadTomorrowProduction(); }
+  else if(tab==='recommendedPurchase'){ loadRecommendedPurchase(); }
+}
+
+/* ---------------- STOCK FORM ---------------- */
+let currentStockData = [];
+async function loadStockForm(){
+  const container = document.getElementById("tabContainer");
+  container.innerHTML="";
+
+  const res = await fetch(`${SCRIPT_URL}?action=getIngredients`);
+  const data = await res.json();
+  currentStockData = data;
+
+  const chefDiv=document.createElement("div");
+  chefDiv.innerHTML=`<input type="text" id="chefName" placeholder="Chef name">`;
+  container.appendChild(chefDiv);
+
+  data.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="row";
+    div.innerHTML=`
+      <div class="ingredientBox">
+        <div class="ingredient">${item.name}</div>
+        <div class="unit">${item.unit}</div>
+      </div>
+      <button onclick="change('${item.name}',-1)">-</button>
+      <input type="number" id="${item.name}" min="0">
+      <button onclick="change('${item.name}',1)">+</button>
+    `;
+    container.appendChild(div);
+  });
+
+  const submitBtn=document.createElement("button");
+  submitBtn.id="submitStockBtn";
+  submitBtn.innerText="SUBMIT";
+  submitBtn.onclick=submitStock;
+  container.appendChild(submitBtn);
+}
+
+function change(id,val){
+  const input=document.getElementById(id);
+  let current = Number(input.value)||0;
+  current+=val;
+  if(current<0) current=0;
+  input.value=current;
+}
+
+async function submitStock(){
+  const chefName=document.getElementById("chefName").value.trim();
+  if(!chefName){ alert("Enter chef name"); return; }
+
+  const data=[];
+  let missing=false;
+  currentStockData.forEach(i=>{
+    const val=document.getElementById(i.name).value;
+    if(val==="") missing=true;
+    data.push({ name:i.name, qty:Number(val) });
+  });
+  if(missing){ alert("Fill all fields"); return; }
+  if(!confirm("Are you sure chef?")) return;
+
+  const res=await fetch(`${SCRIPT_URL}?action=submitStock&data=${encodeURIComponent(JSON.stringify(data))}&chef=${encodeURIComponent(chefName)}`);
+  const result=await res.json();
+  alert("Stock submitted!");
+  document.getElementById("submitStockBtn").style.display="none";
+  document.getElementById("fillNewFormBtn").style.display="block";
+}
+
+function fillNewForm(){ showTab('stockForm'); }
+
+/* ---------------- STOCK LEVEL ---------------- */
+async function loadCurrentStock(){
+  const res=await fetch(`${SCRIPT_URL}?action=getCurrentStock`);
+  const json=await res.json();
+  const container=document.getElementById("tabContainer");
+  container.innerHTML=`<p><strong>Stock level at ${json.lastSubmitDate}</strong></p>`;
+  
+  json.data.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="displayRow";
+    let statusClass="status-good";
+    if(r.stock_status.toLowerCase()==="out of stock") statusClass="status-out";
+    else if(r.stock_status.toLowerCase()==="low stock") statusClass="status-low";
+
+    div.innerHTML=`<div>${r.prep}</div><div>${r.stock_level}</div><div>${r.ideal_stock}</div><div class="${statusClass}">${r.stock_status}</div>`;
+    container.appendChild(div);
+  });
+}
+
+/* ---------------- TOMORROW'S PRODUCTION ---------------- */
+async function loadTomorrowProduction(){
+  const res=await fetch(`${SCRIPT_URL}?action=getTomorrowProduction`);
+  const data=await res.json();
+  const container=document.getElementById("tabContainer");
+
+  data.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="displayRow";
+    div.innerHTML=`<div>${r.prep}</div><div>${r.production_qty}</div><div>${r.unit}</div>`;
+    container.appendChild(div);
+  });
+}
+
+/* ---------------- RECOMMENDED PURCHASE ---------------- */
+async function loadRecommendedPurchase(){
+  const res=await fetch(`${SCRIPT_URL}?action=getRecommendedPurchase`);
+  const data=await res.json();
+  const container=document.getElementById("tabContainer");
+
+  data.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="displayRow";
+    div.innerHTML=`<div>${r.ingredient}</div><div>${r.quantity}</div><div>${r.unit}</div>`;
+    container.appendChild(div);
+  });
+}
+</script>
+
+</body>
+</html>
