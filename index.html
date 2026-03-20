@@ -92,7 +92,7 @@ h1{
   width:240px;
   height:40px;
   font-size:18px;
-  margin:20px auto 30px auto; 
+  margin:10px auto 30px auto; 
   display:block;
   text-align:center;
 }
@@ -119,10 +119,10 @@ h1{
   border:1px solid #ddd;
   border-radius:10px;
   padding:10px;
-  margin-bottom:20px;
+  margin-bottom:10px;
   display:inline-block;
   background:#fafafa;
-  font-weight: normal;
+  color:#777; /* gris para el texto de info */
 }
 
 /* TABLE */
@@ -246,36 +246,36 @@ async function loadForm(){
   if(last){
     const lastData = JSON.parse(last);
 
-    // CARTEL LAST UPDATE arriba
-    const lastUpdateDiv = document.createElement("div");
-    lastUpdateDiv.className="infoBox";
-    const lastTime = new Date(lastData.time || Date.now());
-    lastUpdateDiv.innerHTML = `<b>Last update at ${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</b>`;
-    tab.appendChild(lastUpdateDiv);
-
-    // BOTON NEW STOCK debajo del cartel
+    // BOTON NEW STOCK arriba
     const newBtn=document.createElement("button");
     newBtn.id="newStockBtn";
     newBtn.innerText="NEW STOCK";
     newBtn.onclick=()=> {
-      localStorage.removeItem("lastStockSubmit"); // limpiar submit
-      loadForm(); // recargar formulario vacío
+      localStorage.removeItem("lastStockSubmit");
+      loadForm();
     };
 
     const newBtnContainer=document.createElement("div");
     newBtnContainer.style.textAlign="center";
-    newBtnContainer.style.marginBottom="10px";
+    newBtnContainer.style.marginBottom="5px";
     newBtnContainer.appendChild(newBtn);
     tab.appendChild(newBtnContainer);
+
+    // INFO BOX debajo del NEW STOCK
+    const lastUpdateDiv = document.createElement("div");
+    lastUpdateDiv.className="infoBox";
+    const lastTime = new Date(lastData.time || Date.now());
+    lastUpdateDiv.innerHTML = `Last Update at <span style="color:black;">${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>`;
+    tab.appendChild(lastUpdateDiv);
   }
 
-  // INPUT CHEF name debajo del cartel NEW STOCK
+  // INPUT CHEF debajo del info box
   const topControls = document.createElement("div");
   topControls.id="topControls";
   topControls.innerHTML = `<input id="chefName" placeholder="Chef name">`;
   tab.appendChild(topControls);
 
-  // llenar input si había submit
+  // rellenar input si existía submit
   if(last){
     const lastData = JSON.parse(last);
     document.getElementById("chefName").value = lastData.chef;
