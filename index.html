@@ -41,13 +41,32 @@ h1{
 /* FORM */
 
 .row{
-  display:grid;
-  grid-template-columns: 1fr 50px 80px 50px; /* input más ancho para tablets */
-  gap:12px;
+  display:flex;              /* FLEXBOX en lugar de grid */
   align-items:center;
+  gap:10px;
   max-width:600px;
   margin:auto;
   margin-bottom:14px;
+}
+
+.row > .ingredientContainer{
+  flex:1;                    /* ocupa todo el espacio disponible */
+  text-align:left;
+}
+
+.row input{
+  width:70px;                 /* fijo, suficiente para tablets */
+  height:40px;
+  font-size:22px;
+  text-align:center;
+  flex-shrink:0;              /* no se encoge */
+}
+
+.row button{
+  width:50px;
+  height:36px;
+  font-size:18px;
+  flex-shrink:0;              /* no se encoge */
 }
 
 .ingredient{
@@ -59,20 +78,6 @@ h1{
   font-size:13px;
   color:#666;
   text-align:left;
-}
-
-.row button{
-  width:50px;
-  height:36px;
-  font-size:18px;
-}
-
-.row input{
-  width:100%;
-  min-width:70px;
-  height:40px;
-  font-size:22px;
-  text-align:center;
 }
 
 .categoryTitle{
@@ -259,7 +264,7 @@ async function loadForm(){
       row.className="row";
 
       row.innerHTML=`
-        <div>
+        <div class="ingredientContainer">
           <div class="ingredient">${i.name}</div>
           <div class="unit">${i.unit||""}</div>
         </div>
@@ -294,12 +299,11 @@ async function loadForm(){
       const input = document.getElementById(d.name);
       if(input) input.value = d.qty;
     });
-    // Bloquear inputs si había submit previo
     document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
       el.disabled=true;
     });
     document.getElementById("submitStockBtn").disabled=true;
-    // Mostrar NEW STOCK cerca del formulario
+
     const newBtn=document.createElement("button");
     newBtn.id="newStockBtn";
     newBtn.innerText="NEW STOCK";
