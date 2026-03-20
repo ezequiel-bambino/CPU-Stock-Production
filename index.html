@@ -122,6 +122,7 @@ h1{
   margin-bottom:20px;
   display:inline-block;
   background:#fafafa;
+  font-weight: normal;
 }
 
 /* TABLE */
@@ -234,15 +235,51 @@ async function loadForm(){
 
   const tab=document.getElementById("tab");
 
-  tab.innerHTML=`
-    <div id="topControls">
-      <input id="chefName" placeholder="Chef name">
-    </div>
-  `;
+  tab.innerHTML = ""; // limpiar tab
 
   const container=document.createElement("div");
   container.id="formRows";
   tab.appendChild(container);
+
+  /* RESTAURAR ULTIMO SUBMIT SI EXISTE */
+  const last = localStorage.getItem("lastStockSubmit");
+  if(last){
+    const lastData = JSON.parse(last);
+
+    // CARTEL LAST UPDATE arriba
+    const lastUpdateDiv = document.createElement("div");
+    lastUpdateDiv.className="infoBox";
+    const lastTime = new Date(lastData.time || Date.now());
+    lastUpdateDiv.innerHTML = `<b>Last update at ${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</b>`;
+    tab.appendChild(lastUpdateDiv);
+
+    // BOTON NEW STOCK debajo del cartel
+    const newBtn=document.createElement("button");
+    newBtn.id="newStockBtn";
+    newBtn.innerText="NEW STOCK";
+    newBtn.onclick=()=> {
+      localStorage.removeItem("lastStockSubmit"); // limpiar submit
+      loadForm(); // recargar formulario vacío
+    };
+
+    const newBtnContainer=document.createElement("div");
+    newBtnContainer.style.textAlign="center";
+    newBtnContainer.style.marginBottom="10px";
+    newBtnContainer.appendChild(newBtn);
+    tab.appendChild(newBtnContainer);
+  }
+
+  // INPUT CHEF name debajo del cartel NEW STOCK
+  const topControls = document.createElement("div");
+  topControls.id="topControls";
+  topControls.innerHTML = `<input id="chefName" placeholder="Chef name">`;
+  tab.appendChild(topControls);
+
+  // llenar input si había submit
+  if(last){
+    const lastData = JSON.parse(last);
+    document.getElementById("chefName").value = lastData.chef;
+  }
 
   /* SEPARAR CATEGORIAS */
 
@@ -290,11 +327,9 @@ async function loadForm(){
   submit.onclick=submitStock;
   tab.appendChild(submit);
 
-  /* RESTAURAR ÚLTIMO SUBMIT SI EXISTE */
-  const last = localStorage.getItem("lastStockSubmit");
+  // bloquear inputs si existía submit
   if(last){
     const lastData = JSON.parse(last);
-    document.getElementById("chefName").value = lastData.chef;
     lastData.data.forEach(d=>{
       const input = document.getElementById(d.name);
       if(input) input.value = d.qty;
@@ -303,25 +338,6 @@ async function loadForm(){
       el.disabled=true;
     });
     document.getElementById("submitStockBtn").disabled=true;
-
-    // BOTON NEW STOCK justo arriba del formulario
-    const newBtn=document.createElement("button");
-    newBtn.id="newStockBtn";
-    newBtn.innerText="NEW STOCK";
-    newBtn.onclick=()=>loadForm();
-
-    const newBtnContainer=document.createElement("div");
-    newBtnContainer.style.textAlign="center";
-    newBtnContainer.style.marginBottom="10px";
-    newBtnContainer.appendChild(newBtn);
-    tab.insertBefore(newBtnContainer, container);
-
-    // CARTEL DE LAST UPDATE debajo del boton
-    const lastUpdateDiv = document.createElement("div");
-    lastUpdateDiv.className="infoBox";
-    const lastTime = new Date(lastData.time || Date.now());
-    lastUpdateDiv.innerHTML = `Last update at ${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
-    tab.insertBefore(lastUpdateDiv, container);
   }
 
 }
@@ -448,7 +464,7 @@ async function loadStock(){ /* igual que antes */
 
 async function loadProduction(){ /* igual que antes */
   const r=await fetch(URL+"?action=getTomorrowProduction");
-  const data=await r.json();
+  const data = await r.json();
 
   let html=`<table class="dataTable">
   <tr><th>Prep</th><th>Quantity</th><th>Unit</th></tr>`;
