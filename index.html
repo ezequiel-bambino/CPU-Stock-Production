@@ -111,6 +111,7 @@ h1{
   padding:6px 14px;
   font-size:15px;
   margin-bottom:10px;
+  margin-top:20px; /* espacio de separación de tabs */
 }
 
 /* INFO BOX */
@@ -234,7 +235,6 @@ async function loadForm(){
   const data = await r.json();
 
   const tab=document.getElementById("tab");
-
   tab.innerHTML = ""; // limpiar tab
 
   const container=document.createElement("div");
@@ -274,7 +274,7 @@ async function loadForm(){
   topControls.innerHTML = `<input id="chefName" placeholder="Chef name">`;
   tab.appendChild(topControls);
 
-  // llenar input si existía submit
+  // rellenar input si existía submit
   if(last){
     const lastData = JSON.parse(last);
     document.getElementById("chefName").value = lastData.chef;
@@ -288,7 +288,6 @@ async function loadForm(){
   const cold = data.filter(i=>i.category==="Cold Room");
 
   function renderGroup(title, items){
-
     if(items.length===0) return;
 
     const t=document.createElement("div");
@@ -297,10 +296,8 @@ async function loadForm(){
     container.appendChild(t);
 
     items.forEach(i=>{
-
       const row=document.createElement("div");
       row.className="row";
-
       row.innerHTML=`
         <div class="ingredientContainer">
           <div class="ingredient">${i.name}</div>
@@ -310,11 +307,8 @@ async function loadForm(){
         <input id="${i.name}" type="number">
         <button onclick="change('${i.name}',1)">+</button>
       `;
-
       container.appendChild(row);
-
     });
-
   }
 
   renderGroup("Dry Store", dry);
@@ -357,14 +351,24 @@ function change(id,v){
 
 async function submitStock(){
 
-  if(!confirm("Are you sure Chef?")) return;
-
   const chef=document.getElementById("chefName").value;
-
   if(!chef){
     alert("Chef name required");
     return;
   }
+
+  const inputs=document.querySelectorAll(".row input");
+  let allFilled = true;
+  inputs.forEach(i=>{
+    if(i.value==="" || Number(i.value)<=0) allFilled=false;
+  });
+
+  if(!allFilled){
+    alert("All the boxes must be filled in.");
+    return;
+  }
+
+  if(!confirm("Are you sure Chef?")) return;
 
   document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
     el.disabled=true;
@@ -372,10 +376,7 @@ async function submitStock(){
 
   document.getElementById("submitStockBtn").disabled=true;
 
-  const inputs=document.querySelectorAll(".row input");
-
   let data=[];
-
   inputs.forEach(i=>{
     data.push({name:i.id,qty:Number(i.value)});
   });
