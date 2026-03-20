@@ -38,14 +38,14 @@ h1{
   margin:4px;
 }
 
-/* TOP CONTROLS */
+/* TOP */
 
 #topControls{
   margin-top:25px;
   margin-bottom:15px;
 }
 
-/* FORM ROW (FIX TABLET) */
+/* FORM ROW FIX */
 
 .row{
   display:flex;
@@ -121,7 +121,7 @@ h1{
   font-size:16px;
 }
 
-/* TABLE + STATUS (igual que antes) */
+/* ===== RESTO IGUAL ===== */
 
 .dataTable{
   width:100%;
@@ -131,13 +131,17 @@ h1{
 }
 
 .dataTable th{
+  text-align:center;
   padding:10px;
   border-bottom:2px solid #ddd;
+  font-size:15px;
 }
 
 .dataTable td{
   padding:10px;
   border-bottom:1px solid #eee;
+  font-size:16px;
+  text-align:center;
 }
 
 .prep{
@@ -148,11 +152,43 @@ h1{
 .status{
   padding:6px 10px;
   border-radius:8px;
+  font-size:14px;
+  display:inline-block;
+  color:black;
 }
 
 .good{ background:#8BC34A; }
 .low{ background:#FFC107; }
 .out{ background:#F44336; }
+
+.infoBox{
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:20px;
+  display:inline-block;
+  background:#fafafa;
+}
+
+.counterRow{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.counter{
+  padding:10px 14px;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:15px;
+  color:black;
+}
+
+.counter.red{ background:#F44336; }
+.counter.yellow{ background:#FFC107; }
+.counter.green{ background:#8BC34A; }
 
 </style>
 </head>
@@ -189,7 +225,9 @@ if(t==="prod") loadProduction();
 if(t==="purchase") loadPurchase();
 }
 
-/* FORM */
+/* =========================
+   STOCK FORM (MODIFICADO)
+   ========================= */
 
 async function loadForm(){
 
@@ -202,12 +240,8 @@ const savedChef = localStorage.getItem("lastChef") || "";
 
 const tab=document.getElementById("tab");
 
-/* TOP */
-
 tab.innerHTML=`<div id="topControls"></div>`;
 const top=document.getElementById("topControls");
-
-/* SI YA ESTA SUBMITTED */
 
 if(submitted){
 
@@ -223,9 +257,7 @@ loadForm();
 top.appendChild(btn);
 
 }else{
-
 top.innerHTML=`<input id="chefName" placeholder="Chef name">`;
-
 }
 
 /* FORM */
@@ -296,23 +328,27 @@ alert("Chef name required");
 return;
 }
 
+/* BLOQUEAR INMEDIATO */
+
+document.querySelectorAll("input,button").forEach(el=>el.disabled=true);
+
 const inputs=document.querySelectorAll(".controls input");
 
-let data=[];
+let sendData=[];
 
 inputs.forEach(i=>{
-data.push({name:i.id,qty:Number(i.value)});
+sendData.push({name:i.id,qty:Number(i.value)});
 });
 
-/* GUARDAR LOCAL */
+/* GUARDAR */
 
-localStorage.setItem("lastStock", JSON.stringify(data));
+localStorage.setItem("lastStock", JSON.stringify(sendData));
 localStorage.setItem("lastChef", chef);
 localStorage.setItem("submitted","true");
 
 /* ENVIAR */
 
-await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(data)));
+await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(sendData)));
 
 alert("Submitted");
 
@@ -336,11 +372,90 @@ if(val<0) val=0;
 i.value=val;
 }
 
-/* RESTO (igual que antes) */
+/* =========================
+   ESTO NO SE TOCA
+   ========================= */
 
-async function loadStock(){/* igual */}
-async function loadProduction(){/* igual */}
-async function loadPurchase(){/* igual */}
+async function loadStock(){
+
+const r=await fetch(URL+"?action=getCurrentStock");
+const d=await r.json();
+
+const date=new Date(d.lastDate);
+const formatted=date.toLocaleDateString('en-GB')+" "+
+date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+let out=0, low=0, good=0;
+
+d.rows.forEach(r=>{
+const s=r.status.toLowerCase();
+if(s.includes("out")) out++;
+else if(s.includes("low")) low++;
+else good++;
+});
+
+let html=`<div class="infoBox">
+Stock Level At <b>${formatted}</b>
+</div>
+
+<table class="dataTable">
+<tr><th>Prep</th><th>Stock</th><th>Par</th><th>Status</th></tr>`;
+
+d.rows.forEach(r=>{
+html+=`<tr>
+<td class="prep">${r.prep}</td>
+<td>${r.stock}</td>
+<td>${r.par}</td>
+<td>${r.status}</td>
+</tr>`;
+});
+
+html+="</table>";
+
+document.getElementById("tab").innerHTML=html;
+
+}
+
+async function loadProduction(){
+const r=await fetch(URL+"?action=getTomorrowProduction");
+const data=await r.json();
+
+let html=`<table class="dataTable">
+<tr><th>Prep</th><th>Quantity</th><th>Unit</th></tr>`;
+
+data.forEach(r=>{
+let qty=parseFloat(String(r.qty).replace(",","."));
+if(qty>0){
+html+=`<tr>
+<td class="prep">${r.prep}</td>
+<td>${Math.round(qty)}</td>
+<td>${r.unit}</td>
+</tr>`;
+}
+});
+
+html+="</table>";
+document.getElementById("tab").innerHTML=html;
+}
+
+async function loadPurchase(){
+const r = await fetch(URL+"?action=getRecommendedPurchase");
+const data = await r.json();
+
+let html=`<table class="dataTable">
+<tr><th>Ingredient</th><th>Quantity</th><th>Unit</th></tr>`;
+
+data.forEach(r=>{
+html+=`<tr>
+<td class="prep">${r.ingredient}</td>
+<td>${r.qty}</td>
+<td>${r.unit}</td>
+</tr>`;
+});
+
+html+="</table>";
+document.getElementById("tab").innerHTML=html;
+}
 
 </script>
 
