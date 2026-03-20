@@ -41,7 +41,7 @@ h1{
 /* FORM */
 
 .row{
-  display:flex;              /* FLEXBOX en lugar de grid */
+  display:flex;              
   align-items:center;
   gap:10px;
   max-width:600px;
@@ -50,23 +50,23 @@ h1{
 }
 
 .row > .ingredientContainer{
-  flex:1;                    /* ocupa todo el espacio disponible */
+  flex:1;                    
   text-align:left;
 }
 
 .row input{
-  width:70px;                 /* fijo, suficiente para tablets */
+  width:70px;                 
   height:40px;
   font-size:22px;
   text-align:center;
-  flex-shrink:0;              /* no se encoge */
+  flex-shrink:0;              
 }
 
 .row button{
   width:50px;
   height:36px;
   font-size:18px;
-  flex-shrink:0;              /* no se encoge */
+  flex-shrink:0;              
 }
 
 .ingredient{
@@ -92,7 +92,7 @@ h1{
   width:240px;
   height:40px;
   font-size:18px;
-  margin:20px auto 30px auto; /* más cerca del formulario */
+  margin:20px auto 30px auto; 
   display:block;
   text-align:center;
 }
@@ -110,7 +110,18 @@ h1{
 #newStockBtn{
   padding:6px 14px;
   font-size:15px;
+  margin-bottom:10px;
+}
+
+/* INFO BOX */
+
+.infoBox{
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
   margin-bottom:20px;
+  display:inline-block;
+  background:#fafafa;
 }
 
 /* TABLE */
@@ -154,17 +165,6 @@ h1{
 .good{ background:#8BC34A; }
 .low{ background:#FFC107; }
 .out{ background:#F44336; }
-
-/* INFO BOX */
-
-.infoBox{
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:10px;
-  margin-bottom:20px;
-  display:inline-block;
-  background:#fafafa;
-}
 
 /* COUNTERS */
 
@@ -304,16 +304,24 @@ async function loadForm(){
     });
     document.getElementById("submitStockBtn").disabled=true;
 
+    // BOTON NEW STOCK justo arriba del formulario
     const newBtn=document.createElement("button");
     newBtn.id="newStockBtn";
     newBtn.innerText="NEW STOCK";
     newBtn.onclick=()=>loadForm();
-    const postBtnContainer = document.createElement("div");
-    postBtnContainer.id="postBtnContainer";
-    postBtnContainer.style.marginTop="20px";
-    postBtnContainer.style.textAlign="center";
-    postBtnContainer.appendChild(newBtn);
-    tab.appendChild(postBtnContainer);
+
+    const newBtnContainer=document.createElement("div");
+    newBtnContainer.style.textAlign="center";
+    newBtnContainer.style.marginBottom="10px";
+    newBtnContainer.appendChild(newBtn);
+    tab.insertBefore(newBtnContainer, container);
+
+    // CARTEL DE LAST UPDATE debajo del boton
+    const lastUpdateDiv = document.createElement("div");
+    lastUpdateDiv.className="infoBox";
+    const lastTime = new Date(lastData.time || Date.now());
+    lastUpdateDiv.innerHTML = `Last update at ${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+    tab.insertBefore(lastUpdateDiv, container);
   }
 
 }
@@ -357,29 +365,17 @@ async function submitStock(){
 
   await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(data)));
 
-  // Guardar en localStorage
-  localStorage.setItem("lastStockSubmit", JSON.stringify({chef:chef,data:data}));
+  // Guardar en localStorage con fecha
+  localStorage.setItem("lastStockSubmit", JSON.stringify({chef:chef,data:data,time:Date.now()}));
 
   alert("Submitted");
 
-  // Mostrar NEW STOCK cerca del formulario
-  const newBtn=document.createElement("button");
-  newBtn.id="newStockBtn";
-  newBtn.innerText="NEW STOCK";
-  newBtn.onclick=()=>loadForm();
-
-  const postBtnContainer = document.createElement("div");
-  postBtnContainer.id="postBtnContainer";
-  postBtnContainer.style.marginTop="20px";
-  postBtnContainer.style.textAlign="center";
-  postBtnContainer.appendChild(newBtn);
-  document.getElementById("tab").appendChild(postBtnContainer);
-
+  loadForm(); // recarga la tab para mostrar NEW STOCK y Last update
 }
 
 /* RESTO IGUAL */
 
-async function loadStock(){
+async function loadStock(){ /* igual que antes */ 
   const r=await fetch(URL+"?action=getCurrentStock");
   const d=await r.json();
 
@@ -450,7 +446,7 @@ async function loadStock(){
   document.getElementById("tab").innerHTML=html;
 }
 
-async function loadProduction(){
+async function loadProduction(){ /* igual que antes */
   const r=await fetch(URL+"?action=getTomorrowProduction");
   const data=await r.json();
 
@@ -472,7 +468,7 @@ async function loadProduction(){
   document.getElementById("tab").innerHTML=html;
 }
 
-async function loadPurchase(){
+async function loadPurchase(){ /* igual que antes */
   const r = await fetch(URL+"?action=getRecommendedPurchase");
   const data = await r.json();
 
