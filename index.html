@@ -92,7 +92,7 @@ h1{
   width:240px;
   height:40px;
   font-size:18px;
-  margin:10px auto 30px auto; 
+  margin:10px auto 20px auto; 
   display:block;
   text-align:center;
 }
@@ -239,7 +239,6 @@ async function loadForm(){
 
   const container=document.createElement("div");
   container.id="formRows";
-  tab.appendChild(container);
 
   /* RESTAURAR ULTIMO SUBMIT SI EXISTE */
   const last = localStorage.getItem("lastStockSubmit");
@@ -269,17 +268,19 @@ async function loadForm(){
     tab.appendChild(lastUpdateDiv);
   }
 
-  // INPUT CHEF debajo del info box
+  // INPUT CHEF name arriba del formulario
   const topControls = document.createElement("div");
   topControls.id="topControls";
   topControls.innerHTML = `<input id="chefName" placeholder="Chef name">`;
   tab.appendChild(topControls);
 
-  // rellenar input si existía submit
+  // llenar input si existía submit
   if(last){
     const lastData = JSON.parse(last);
     document.getElementById("chefName").value = lastData.chef;
   }
+
+  tab.appendChild(container);
 
   /* SEPARAR CATEGORIAS */
 
