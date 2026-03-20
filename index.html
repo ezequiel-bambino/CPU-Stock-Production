@@ -42,7 +42,7 @@ h1{
 
 .row{
   display:grid;
-  grid-template-columns:auto 60px 70px 60px;
+  grid-template-columns:auto 50px 80px 50px; /* 🔥 FIX ACA */
   gap:10px;
   align-items:center;
   max-width:600px;
@@ -62,6 +62,7 @@ h1{
 }
 
 .row button{
+  width:50px;
   height:36px;
   font-size:18px;
 }
@@ -202,7 +203,7 @@ h1{
 
 <script>
 
-const URL="https://script.google.com/macros/s/AKfycbyhEMh2GCCSz-bDB6SF51B7yxKbt4RuvT5Kz769JmTlvWMed2MdqKV6phw13Ym8GSB_ow/exec";
+const URL="https://script.google.com/macros/s/AKfycbxC5LI3t7HbWHM8p2uhKeH9Bsr3XMPHDO-qscePm1C6usTbMAxwTT-_Y6f-DvI6BwORLA/exec";
 
 document.getElementById("todayDate").innerText =
 new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
@@ -341,7 +342,7 @@ top.appendChild(newBtn);
 
 }
 
-/* RESTO DEL CODIGO IGUAL (NO CAMBIA) */
+/* RESTO IGUAL */
 
 async function loadStock(){
 const r=await fetch(URL+"?action=getCurrentStock");
