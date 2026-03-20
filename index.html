@@ -42,7 +42,7 @@ h1{
 
 .row{
   display:grid;
-  grid-template-columns:auto 60px 90px 60px;
+  grid-template-columns:auto 60px 70px 60px;
   gap:10px;
   align-items:center;
   max-width:600px;
@@ -61,7 +61,11 @@ h1{
   text-align:left;
 }
 
-.row button,
+.row button{
+  height:36px;
+  font-size:18px;
+}
+
 .row input{
   width:70px;
   height:36px;
@@ -69,15 +73,19 @@ h1{
   text-align:center;
 }
 
-.row input{
-  text-align:center;
+.categoryTitle{
+  font-size:20px;
+  margin:25px 0 10px 0;
+  font-weight:bold;
 }
+
+/* CHEF */
 
 #chefName{
   width:240px;
   height:40px;
   font-size:18px;
-  margin-bottom:25px;
+  margin-bottom:20px;
   text-align:center;
 }
 
@@ -86,7 +94,7 @@ h1{
 #submitStockBtn{
   padding:8px 16px;
   font-size:16px;
-  margin-top:10px;
+  margin-top:20px;
 }
 
 /* NEW STOCK */
@@ -135,17 +143,9 @@ h1{
   color:black;
 }
 
-.good{
-  background:#8BC34A;
-}
-
-.low{
-  background:#FFC107;
-}
-
-.out{
-  background:#F44336;
-}
+.good{ background:#8BC34A; }
+.low{ background:#FFC107; }
+.out{ background:#F44336; }
 
 /* INFO BOX */
 
@@ -176,17 +176,9 @@ h1{
   color:black;
 }
 
-.counter.red{
-  background:#F44336;
-}
-
-.counter.yellow{
-  background:#FFC107;
-}
-
-.counter.green{
-  background:#8BC34A;
-}
+.counter.red{ background:#F44336; }
+.counter.yellow{ background:#FFC107; }
+.counter.green{ background:#8BC34A; }
 
 </style>
 </head>
@@ -210,7 +202,7 @@ h1{
 
 <script>
 
-const URL="https://script.google.com/macros/s/AKfycbxC5LI3t7HbWHM8p2uhKeH9Bsr3XMPHDO-qscePm1C6usTbMAxwTT-_Y6f-DvI6BwORLA/exec";
+const URL="https://script.google.com/macros/s/AKfycbyhEMh2GCCSz-bDB6SF51B7yxKbt4RuvT5Kz769JmTlvWMed2MdqKV6phw13Ym8GSB_ow/exec";
 
 document.getElementById("todayDate").innerText =
 new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
@@ -244,10 +236,23 @@ const container=document.createElement("div");
 container.id="formRows";
 tab.appendChild(container);
 
-data.forEach(i=>{
+/* SEPARAR CATEGORIAS */
+
+const dry = data.filter(i=>i.category==="Dry Store");
+const cold = data.filter(i=>i.category==="Cold Room");
+
+function renderGroup(title, items){
+
+if(items.length===0) return;
+
+const t=document.createElement("div");
+t.className="categoryTitle";
+t.innerText=title;
+container.appendChild(t);
+
+items.forEach(i=>{
 
 const row=document.createElement("div");
-
 row.className="row";
 
 row.innerHTML=`
@@ -269,14 +274,17 @@ container.appendChild(row);
 
 });
 
+}
+
+renderGroup("Dry Store", dry);
+renderGroup("Cold Room", cold);
+
+/* SUBMIT */
+
 const submit=document.createElement("button");
-
 submit.id="submitStockBtn";
-
 submit.innerText="SUBMIT";
-
 submit.onclick=submitStock;
-
 tab.appendChild(submit);
 
 }
@@ -284,17 +292,11 @@ tab.appendChild(submit);
 /* CHANGE */
 
 function change(id,v){
-
 let i=document.getElementById(id);
-
 let val=Number(i.value)||0;
-
 val+=v;
-
 if(val<0) val=0;
-
 i.value=val;
-
 }
 
 /* SUBMIT */
@@ -329,211 +331,128 @@ await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSO
 alert("Submitted");
 
 const newBtn=document.createElement("button");
-
 newBtn.id="newStockBtn";
-
 newBtn.innerText="NEW STOCK";
-
 newBtn.onclick=()=>loadForm();
 
 const top=document.getElementById("topControls");
-
 top.innerHTML="";
-
 top.appendChild(newBtn);
 
 }
 
-/* STOCK LEVEL */
+/* RESTO DEL CODIGO IGUAL (NO CAMBIA) */
 
 async function loadStock(){
-
 const r=await fetch(URL+"?action=getCurrentStock");
-
 const d=await r.json();
 
 const date=new Date(d.lastDate);
-
 const formatted=date.toLocaleDateString('en-GB')+" "+
 date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 
-let out=0;
-let low=0;
-let good=0;
+let out=0, low=0, good=0;
 
 d.rows.forEach(r=>{
-
 const s=r.status.toLowerCase();
-
 if(s.includes("out")) out++;
 else if(s.includes("low")) low++;
 else good++;
-
 });
 
 d.rows.sort((a,b)=>{
-
 function rank(s){
-
 s=s.status.toLowerCase();
-
 if(s.includes("out")) return 1;
 if(s.includes("low")) return 2;
 return 3;
-
 }
-
 return rank(a)-rank(b);
-
 });
 
 let html=`
-
 <div class="infoBox">
 Stock Level At <b>${formatted}</b>
 </div>
 
 <div class="counterRow">
-
 <div class="counter red">🔴 ${out} Out of Stock</div>
 <div class="counter yellow">🟡 ${low} Low Stock</div>
 <div class="counter green">🟢 ${good} Good Stock</div>
-
 </div>
 
 <table class="dataTable">
-
 <tr>
 <th>Prep</th>
 <th>Stock</th>
 <th>Par</th>
 <th>Status</th>
 </tr>
-
 `;
 
 d.rows.forEach(r=>{
-
 let cls="good";
-
 const s=r.status.toLowerCase();
-
 if(s.includes("out")) cls="out";
 else if(s.includes("low")) cls="low";
 
 let icon="🟢";
-
 if(cls==="out") icon="🔴";
 if(cls==="low") icon="🟡";
 
 html+=`
-
 <tr>
-
 <td class="prep">${r.prep}</td>
 <td>${r.stock}</td>
 <td>${r.par}</td>
 <td><span class="status ${cls}">${icon} ${r.status}</span></td>
-
 </tr>
-
 `;
-
 });
 
 html+="</table>";
-
 document.getElementById("tab").innerHTML=html;
-
 }
 
-/* TOMORROW PRODUCTION */
-
 async function loadProduction(){
-
 const r=await fetch(URL+"?action=getTomorrowProduction");
-
 const data=await r.json();
 
-let html=`
-
-<table class="dataTable">
-
-<tr>
-<th>Prep</th>
-<th>Quantity</th>
-<th>Unit</th>
-</tr>
-
-`;
+let html=`<table class="dataTable">
+<tr><th>Prep</th><th>Quantity</th><th>Unit</th></tr>`;
 
 data.forEach(r=>{
-
 let qty=parseFloat(String(r.qty).replace(",","."));
-
 if(qty>0){
-
-html+=`
-
-<tr>
-
+html+=`<tr>
 <td class="prep">${r.prep}</td>
 <td>${Math.round(qty)}</td>
 <td>${r.unit}</td>
-
-</tr>
-
-`;
-
+</tr>`;
 }
-
 });
 
 html+="</table>";
-
 document.getElementById("tab").innerHTML=html;
-
 }
 
-/* RECOMMENDED PURCHASE */
-
 async function loadPurchase(){
-
 const r = await fetch(URL+"?action=getRecommendedPurchase");
 const data = await r.json();
 
-let html=`
-
-<table class="dataTable">
-
-<tr>
-<th>Ingredient</th>
-<th>Quantity</th>
-<th>Unit</th>
-</tr>
-
-`;
+let html=`<table class="dataTable">
+<tr><th>Ingredient</th><th>Quantity</th><th>Unit</th></tr>`;
 
 data.forEach(r=>{
-
-html+=`
-
-<tr>
-
+html+=`<tr>
 <td class="prep">${r.ingredient}</td>
 <td>${r.qty}</td>
 <td>${r.unit}</td>
-
-</tr>
-
-`;
-
+</tr>`;
 });
 
 html+="</table>";
-
 document.getElementById("tab").innerHTML=html;
-
 }
 
 </script>
