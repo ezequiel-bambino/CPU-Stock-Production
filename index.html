@@ -13,8 +13,6 @@ body{
   text-align:center;
 }
 
-/* HEADER */
-
 .logo{
   width:200px;
   margin:auto;
@@ -29,14 +27,10 @@ h1{
 
 .date{
   color:#777;
-  margin-bottom:20px;
+  margin-bottom:25px;
 }
 
 /* TABS */
-
-.tab-buttons{
-  margin-bottom:25px;
-}
 
 .tab-buttons button{
   padding:10px 18px;
@@ -48,10 +42,10 @@ h1{
 
 .row{
   display:grid;
-  grid-template-columns: 1fr 60px 90px 60px; /* 🔥 FIX REAL */
+  grid-template-columns: 1fr 50px 80px 50px; /* input más ancho para tablets */
   gap:12px;
   align-items:center;
-  max-width:700px;
+  max-width:600px;
   margin:auto;
   margin-bottom:14px;
 }
@@ -68,67 +62,53 @@ h1{
 }
 
 .row button{
-  width:60px;
-  height:42px;
+  width:50px;
+  height:36px;
   font-size:18px;
 }
 
 .row input{
-  width:90px;
-  height:42px;
+  width:100%;
+  min-width:70px;
+  height:40px;
   font-size:22px;
   text-align:center;
 }
 
-/* CATEGORY */
-
 .categoryTitle{
   font-size:20px;
-  margin:30px 0 10px 0;
+  margin:25px 0 10px 0;
   font-weight:bold;
 }
 
-/* TOP CONTROLS */
-
-#topControls{
-  margin-top:10px;
-  margin-bottom:10px;
-}
+/* CHEF */
 
 #chefName{
-  width:260px;
-  height:42px;
+  width:240px;
+  height:40px;
   font-size:18px;
+  margin:20px auto 30px auto; /* más cerca del formulario */
+  display:block;
   text-align:center;
-  margin-bottom:10px;
 }
 
-/* BUTTONS */
+/* SUBMIT */
 
 #submitStockBtn{
-  padding:10px 18px;
-  font-size:18px;
+  padding:8px 16px;
+  font-size:16px;
   margin-top:20px;
 }
 
+/* NEW STOCK */
+
 #newStockBtn{
-  padding:10px 18px;
-  font-size:16px;
-  margin-top:10px;
+  padding:6px 14px;
+  font-size:15px;
+  margin-bottom:20px;
 }
 
-/* INFO */
-
-.infoBox{
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:10px;
-  margin-top:10px;
-  display:inline-block;
-  background:#fafafa;
-}
-
-/* TABLE ETC (NO TOCAR) */
+/* TABLE */
 
 .dataTable{
   width:100%;
@@ -141,11 +121,13 @@ h1{
   text-align:center;
   padding:10px;
   border-bottom:2px solid #ddd;
+  font-size:15px;
 }
 
 .dataTable td{
   padding:10px;
   border-bottom:1px solid #eee;
+  font-size:16px;
   text-align:center;
 }
 
@@ -154,14 +136,32 @@ h1{
   text-align:left;
 }
 
+/* STATUS */
+
 .status{
   padding:6px 10px;
   border-radius:8px;
+  font-size:14px;
+  display:inline-block;
+  color:black;
 }
 
 .good{ background:#8BC34A; }
 .low{ background:#FFC107; }
 .out{ background:#F44336; }
+
+/* INFO BOX */
+
+.infoBox{
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:20px;
+  display:inline-block;
+  background:#fafafa;
+}
+
+/* COUNTERS */
 
 .counterRow{
   display:flex;
@@ -175,6 +175,8 @@ h1{
   padding:10px 14px;
   border-radius:10px;
   font-weight:bold;
+  font-size:15px;
+  color:black;
 }
 
 .counter.red{ background:#F44336; }
@@ -187,7 +189,9 @@ h1{
 <body>
 
 <img src="icon.png" class="logo">
+
 <h1>BAMBINO CPU</h1>
+
 <div id="todayDate" class="date"></div>
 
 <div class="tab-buttons">
@@ -209,189 +213,279 @@ new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'
 /* TABS */
 
 function showTab(t){
-document.getElementById("tab").innerHTML="";
-if(t==="form") loadForm();
-if(t==="stock") loadStock();
-if(t==="prod") loadProduction();
-if(t==="purchase") loadPurchase();
+  document.getElementById("tab").innerHTML="";
+  if(t==="form") loadForm();
+  if(t==="stock") loadStock();
+  if(t==="prod") loadProduction();
+  if(t==="purchase") loadPurchase();
 }
 
 /* FORM */
 
 async function loadForm(){
 
-const saved = JSON.parse(localStorage.getItem("lastStock"));
-const r = await fetch(URL+"?action=getIngredients");
-const data = await r.json();
+  const r = await fetch(URL+"?action=getIngredients");
+  const data = await r.json();
 
-const tab=document.getElementById("tab");
+  const tab=document.getElementById("tab");
 
-tab.innerHTML=`<div id="topControls"></div>`;
-const top=document.getElementById("topControls");
+  tab.innerHTML=`
+    <div id="topControls">
+      <input id="chefName" placeholder="Chef name">
+    </div>
+  `;
 
-const container=document.createElement("div");
-container.id="formRows";
-tab.appendChild(container);
+  const container=document.createElement("div");
+  container.id="formRows";
+  tab.appendChild(container);
 
-/* CHEF */
+  /* SEPARAR CATEGORIAS */
 
-const chefInput=document.createElement("input");
-chefInput.id="chefName";
-chefInput.placeholder="Chef name";
+  const dry = data.filter(i=>i.category==="Dry Store");
+  const cold = data.filter(i=>i.category==="Cold Room");
 
-if(saved){
-chefInput.value=saved.chef;
-chefInput.disabled=true;
-}
+  function renderGroup(title, items){
 
-top.appendChild(chefInput);
+    if(items.length===0) return;
 
-/* CATEGORIES */
+    const t=document.createElement("div");
+    t.className="categoryTitle";
+    t.innerText=title;
+    container.appendChild(t);
 
-const dry = data.filter(i=>i.category==="Dry Store");
-const cold = data.filter(i=>i.category==="Cold Room");
+    items.forEach(i=>{
 
-function renderGroup(title, items){
+      const row=document.createElement("div");
+      row.className="row";
 
-if(items.length===0) return;
+      row.innerHTML=`
+        <div>
+          <div class="ingredient">${i.name}</div>
+          <div class="unit">${i.unit||""}</div>
+        </div>
+        <button onclick="change('${i.name}',-1)">-</button>
+        <input id="${i.name}" type="number">
+        <button onclick="change('${i.name}',1)">+</button>
+      `;
 
-const t=document.createElement("div");
-t.className="categoryTitle";
-t.innerText=title;
-container.appendChild(t);
+      container.appendChild(row);
 
-items.forEach(i=>{
+    });
 
-const row=document.createElement("div");
-row.className="row";
+  }
 
-const val = saved ? (saved.data.find(x=>x.name===i.name)?.qty || 0) : "";
+  renderGroup("Dry Store", dry);
+  renderGroup("Cold Room", cold);
 
-row.innerHTML=`
-<div>
-<div class="ingredient">${i.name}</div>
-<div class="unit">${i.unit||""}</div>
-</div>
+  /* SUBMIT */
 
-<button onclick="change('${i.name}',-1)">-</button>
-<input id="${i.name}" type="number" value="${val}">
-<button onclick="change('${i.name}',1)">+</button>
-`;
+  const submit=document.createElement("button");
+  submit.id="submitStockBtn";
+  submit.innerText="SUBMIT";
+  submit.onclick=submitStock;
+  tab.appendChild(submit);
 
-container.appendChild(row);
-
-});
-
-}
-
-renderGroup("Dry Store", dry);
-renderGroup("Cold Room", cold);
-
-/* SUBMIT */
-
-const submit=document.createElement("button");
-submit.id="submitStockBtn";
-submit.innerText="SUBMIT";
-submit.onclick=submitStock;
-
-if(saved){
-submit.style.display="none";
-}
-
-tab.appendChild(submit);
-
-/* NEW STOCK */
-
-if(saved){
-
-const newBtn=document.createElement("button");
-newBtn.id="newStockBtn";
-newBtn.innerText="NEW STOCK";
-
-newBtn.onclick=()=>{
-localStorage.removeItem("lastStock");
-loadForm();
-};
-
-tab.appendChild(newBtn);
-
-/* INFO */
-
-const info=document.createElement("div");
-info.className="infoBox";
-info.innerText="Last update at "+saved.time;
-tab.appendChild(info);
-
-/* BLOQUEAR */
-
-document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
-el.disabled=true;
-});
-
-}
+  /* RESTAURAR ÚLTIMO SUBMIT SI EXISTE */
+  const last = localStorage.getItem("lastStockSubmit");
+  if(last){
+    const lastData = JSON.parse(last);
+    document.getElementById("chefName").value = lastData.chef;
+    lastData.data.forEach(d=>{
+      const input = document.getElementById(d.name);
+      if(input) input.value = d.qty;
+    });
+    // Bloquear inputs si había submit previo
+    document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
+      el.disabled=true;
+    });
+    document.getElementById("submitStockBtn").disabled=true;
+    // Mostrar NEW STOCK cerca del formulario
+    const newBtn=document.createElement("button");
+    newBtn.id="newStockBtn";
+    newBtn.innerText="NEW STOCK";
+    newBtn.onclick=()=>loadForm();
+    const postBtnContainer = document.createElement("div");
+    postBtnContainer.id="postBtnContainer";
+    postBtnContainer.style.marginTop="20px";
+    postBtnContainer.style.textAlign="center";
+    postBtnContainer.appendChild(newBtn);
+    tab.appendChild(postBtnContainer);
+  }
 
 }
 
 /* CHANGE */
 
 function change(id,v){
-let i=document.getElementById(id);
-let val=Number(i.value)||0;
-val+=v;
-if(val<0) val=0;
-i.value=val;
+  let i=document.getElementById(id);
+  let val=Number(i.value)||0;
+  val+=v;
+  if(val<0) val=0;
+  i.value=val;
 }
 
 /* SUBMIT */
 
 async function submitStock(){
 
-if(!confirm("Are you sure Chef?")) return;
+  if(!confirm("Are you sure Chef?")) return;
 
-const chef=document.getElementById("chefName").value;
+  const chef=document.getElementById("chefName").value;
 
-if(!chef){
-alert("Chef name required");
-return;
+  if(!chef){
+    alert("Chef name required");
+    return;
+  }
+
+  document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
+    el.disabled=true;
+  });
+
+  document.getElementById("submitStockBtn").disabled=true;
+
+  const inputs=document.querySelectorAll(".row input");
+
+  let data=[];
+
+  inputs.forEach(i=>{
+    data.push({name:i.id,qty:Number(i.value)});
+  });
+
+  await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(data)));
+
+  // Guardar en localStorage
+  localStorage.setItem("lastStockSubmit", JSON.stringify({chef:chef,data:data}));
+
+  alert("Submitted");
+
+  // Mostrar NEW STOCK cerca del formulario
+  const newBtn=document.createElement("button");
+  newBtn.id="newStockBtn";
+  newBtn.innerText="NEW STOCK";
+  newBtn.onclick=()=>loadForm();
+
+  const postBtnContainer = document.createElement("div");
+  postBtnContainer.id="postBtnContainer";
+  postBtnContainer.style.marginTop="20px";
+  postBtnContainer.style.textAlign="center";
+  postBtnContainer.appendChild(newBtn);
+  document.getElementById("tab").appendChild(postBtnContainer);
+
 }
 
-document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
-el.disabled=true;
-});
+/* RESTO IGUAL */
 
-document.getElementById("submitStockBtn").disabled=true;
+async function loadStock(){
+  const r=await fetch(URL+"?action=getCurrentStock");
+  const d=await r.json();
 
-const inputs=document.querySelectorAll(".row input");
+  const date=new Date(d.lastDate);
+  const formatted=date.toLocaleDateString('en-GB')+" "+
+  date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 
-let data=[];
+  let out=0, low=0, good=0;
 
-inputs.forEach(i=>{
-data.push({name:i.id,qty:Number(i.value)});
-});
+  d.rows.forEach(r=>{
+    const s=r.status.toLowerCase();
+    if(s.includes("out")) out++;
+    else if(s.includes("low")) low++;
+    else good++;
+  });
 
-await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(data)));
+  d.rows.sort((a,b)=>{
+    function rank(s){
+      s=s.status.toLowerCase();
+      if(s.includes("out")) return 1;
+      if(s.includes("low")) return 2;
+      return 3;
+    }
+    return rank(a)-rank(b);
+  });
 
-const now=new Date();
-const formatted=now.toLocaleDateString('en-GB')+" "+
-now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  let html=`
+  <div class="infoBox">
+  Stock Level At <b>${formatted}</b>
+  </div>
 
-localStorage.setItem("lastStock", JSON.stringify({
-chef:chef,
-data:data,
-time:formatted
-}));
+  <div class="counterRow">
+  <div class="counter red">🔴 ${out} Out of Stock</div>
+  <div class="counter yellow">🟡 ${low} Low Stock</div>
+  <div class="counter green">🟢 ${good} Good Stock</div>
+  </div>
 
-alert("Submitted");
+  <table class="dataTable">
+  <tr>
+  <th>Prep</th>
+  <th>Stock</th>
+  <th>Par</th>
+  <th>Status</th>
+  </tr>
+  `;
 
-loadForm();
+  d.rows.forEach(r=>{
+    let cls="good";
+    const s=r.status.toLowerCase();
+    if(s.includes("out")) cls="out";
+    else if(s.includes("low")) cls="low";
 
+    let icon="🟢";
+    if(cls==="out") icon="🔴";
+    if(cls==="low") icon="🟡";
+
+    html+=`
+    <tr>
+    <td class="prep">${r.prep}</td>
+    <td>${r.stock}</td>
+    <td>${r.par}</td>
+    <td><span class="status ${cls}">${icon} ${r.status}</span></td>
+    </tr>
+    `;
+  });
+
+  html+="</table>";
+  document.getElementById("tab").innerHTML=html;
 }
 
-/* RESTO NO CAMBIA */
+async function loadProduction(){
+  const r=await fetch(URL+"?action=getTomorrowProduction");
+  const data=await r.json();
 
-async function loadStock(){/* igual que antes */}
-async function loadProduction(){/* igual */}
-async function loadPurchase(){/* igual */}
+  let html=`<table class="dataTable">
+  <tr><th>Prep</th><th>Quantity</th><th>Unit</th></tr>`;
+
+  data.forEach(r=>{
+    let qty=parseFloat(String(r.qty).replace(",",".")); 
+    if(qty>0){
+      html+=`<tr>
+      <td class="prep">${r.prep}</td>
+      <td>${Math.round(qty)}</td>
+      <td>${r.unit}</td>
+      </tr>`;
+    }
+  });
+
+  html+="</table>";
+  document.getElementById("tab").innerHTML=html;
+}
+
+async function loadPurchase(){
+  const r = await fetch(URL+"?action=getRecommendedPurchase");
+  const data = await r.json();
+
+  let html=`<table class="dataTable">
+  <tr><th>Ingredient</th><th>Quantity</th><th>Unit</th></tr>`;
+
+  data.forEach(r=>{
+    html+=`<tr>
+    <td class="prep">${r.ingredient}</td>
+    <td>${r.qty}</td>
+    <td>${r.unit}</td>
+    </tr>`;
+  });
+
+  html+="</table>";
+  document.getElementById("tab").innerHTML=html;
+}
 
 </script>
 
