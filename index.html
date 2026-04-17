@@ -1,510 +1,929 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BAMBINO CPU</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BAMBINO CPU - Kitchen Management</title>
 
 <style>
-
-body{
-  font-family: Arial;
-  padding:20px;
-  text-align:center;
+* {
+  box-sizing: border-box;
 }
 
-.logo{
-  width:200px;
-  margin:auto;
-  display:block;
-  margin-bottom:10px;
+html, body {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
 }
 
-h1{
-  font-size:32px;
-  margin-bottom:5px;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  font-size: 18px;
+  padding: 20px;
+  text-align: center;
+  background: #f5f5f5;
+  min-height: 100vh;
 }
 
-.date{
-  color:#777;
-  margin-bottom:25px;
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 15px;
+  padding: 25px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* TABS */
-
-.tab-buttons button{
-  padding:10px 18px;
-  font-size:18px;
-  margin:4px;
+.logo {
+  width: 180px;
+  display: block;
+  margin: 0 auto 15px;
 }
 
-/* FORM */
-
-.row{
-  display:flex;              
-  align-items:center;
-  gap:10px;
-  max-width:600px;
-  margin:auto;
-  margin-bottom:14px;
+h1 {
+  font-size: 28px;
+  margin-bottom: 5px;
+  color: #333;
 }
 
-.row > .ingredientContainer{
-  flex:1;                    
-  text-align:left;
+.date {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 25px;
 }
 
-.row input{
-  width:70px;                 
-  height:40px;
-  font-size:22px;
-  text-align:center;
-  flex-shrink:0;              
+/* Tabs Styles */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-.row button{
-  width:50px;
-  height:36px;
-  font-size:18px;
-  flex-shrink:0;              
+.tab {
+  flex: 1;
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  bottom: -2px;
 }
 
-.ingredient{
-  font-weight:bold;
-  text-align:left;
+.tab:hover {
+  background: #f0f0f0;
+  color: #333;
 }
 
-.unit{
-  font-size:13px;
-  color:#666;
-  text-align:left;
+.tab.active {
+  color: #e63946;
+  border-bottom: 3px solid #e63946;
 }
 
-.categoryTitle{
-  font-size:20px;
-  margin:25px 0 10px 0;
-  font-weight:bold;
+/* Tab Content */
+.tab-content {
+  display: none;
 }
 
-/* CHEF */
-
-#chefName{
-  width:240px;
-  height:40px;
-  font-size:18px;
-  margin:10px auto 20px auto; 
-  display:block;
-  text-align:center;
+.tab-content.active {
+  display: block;
 }
 
-/* SUBMIT */
-
-#submitStockBtn{
-  padding:8px 16px;
-  font-size:16px;
-  margin-top:20px;
+/* Form Styles */
+.user-section {
+  margin-bottom: 20px;
+  text-align: left;
 }
 
-/* NEW STOCK */
-
-#newStockBtn{
-  padding:6px 14px;
-  font-size:15px;
-  margin-bottom:10px;
-  margin-top:20px; /* espacio de separación de tabs */
+.user-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
 }
 
-/* INFO BOX */
-
-.infoBox{
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:10px;
-  margin-bottom:10px;
-  display:inline-block;
-  background:#fafafa;
-  color:#777; /* gris para el texto de info */
+.user-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 18px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  transition: border-color 0.3s;
 }
 
-/* TABLE */
-
-.dataTable{
-  width:100%;
-  max-width:650px;
-  margin:auto;
-  border-collapse:collapse;
+.user-input:focus {
+  outline: none;
+  border-color: #e63946;
 }
 
-.dataTable th{
-  text-align:center;
-  padding:10px;
-  border-bottom:2px solid #ddd;
-  font-size:15px;
+.user-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.dataTable td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  font-size:16px;
-  text-align:center;
+.categoryTitle {
+  font-size: 20px;
+  margin: 25px 0 15px 0;
+  font-weight: 700;
+  color: #333;
+  text-align: left;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e63946;
+  display: inline-block;
 }
 
-.prep{
-  font-weight:bold;
-  text-align:left;
+/* Items Grid */
+.items-grid {
+  margin: 20px 0;
+  opacity: 1;
+  transition: opacity 0.3s;
 }
 
-/* STATUS */
-
-.status{
-  padding:6px 10px;
-  border-radius:8px;
-  font-size:14px;
-  display:inline-block;
-  color:black;
+.items-grid.loading {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
-.good{ background:#8BC34A; }
-.low{ background:#FFC107; }
-.out{ background:#F44336; }
-
-/* COUNTERS */
-
-.counterRow{
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  margin-bottom:20px;
-  flex-wrap:wrap;
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  transition: all 0.3s;
 }
 
-.counter{
-  padding:10px 14px;
-  border-radius:10px;
-  font-weight:bold;
-  font-size:15px;
-  color:black;
+.row:hover {
+  background: #f5f5f5;
+  transform: translateX(5px);
 }
 
-.counter.red{ background:#F44336; }
-.counter.yellow{ background:#FFC107; }
-.counter.green{ background:#8BC34A; }
+.ingredientContainer {
+  text-align: left;
+}
 
+.ingredient {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.unit {
+  font-size: 13px;
+  color: #888;
+  margin-top: 2px;
+}
+
+input[type="number"] {
+  width: 70px;
+  padding: 10px;
+  font-size: 18px;
+  text-align: center;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  transition: border-color 0.3s;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: #e63946;
+}
+
+input[type="number"]:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.btn-qty {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  background: #e63946;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-qty:hover:not(:disabled) {
+  background: #c1121f;
+  transform: scale(1.05);
+}
+
+.btn-qty:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Action Buttons */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: 600;
+  background: #e63946;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 20px;
+  position: relative;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #c1121f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(230, 57, 70, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-primary.loading {
+  color: transparent;
+}
+
+.btn-primary.loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.btn-secondary:hover {
+  background: #357abd;
+  transform: translateY(-2px);
+}
+
+.btn-back {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 15px;
+}
+
+.btn-back:hover {
+  background: #e0e0e0;
+}
+
+/* Status Messages */
+.status-message {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 14px;
+  color: #2e7d32;
+}
+
+.status-message.error {
+  background: #ffebee;
+  border-left-color: #f44336;
+  color: #c62828;
+}
+
+.last-submission-info {
+  margin: 15px 0;
+  padding: 12px;
+  background: #fff3e0;
+  border-left: 4px solid #ff9800;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 14px;
+  color: #e65100;
+}
+
+/* Info Box */
+.infoBox {
+  background: #f8f9fa;
+  border-left: 4px solid #e63946;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  text-align: left;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Counters */
+.counterRow {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.counter {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.counter.red { background: #f44336; }
+.counter.yellow { background: #ff9800; }
+.counter.green { background: #4caf50; }
+
+/* Data Table */
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.dataTable th {
+  text-align: center;
+  padding: 12px;
+  border-bottom: 2px solid #e0e0e0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  background: #fafafa;
+}
+
+.dataTable td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 15px;
+  text-align: center;
+}
+
+.prep {
+  font-weight: 600;
+  text-align: left;
+  color: #333;
+}
+
+.status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status.good { background: #c8e6c9; color: #2e7d32; }
+.status.low { background: #ffe0b2; color: #e65100; }
+.status.out { background: #ffcdd2; color: #c62828; }
+
+.note {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  .row {
+    gap: 8px;
+  }
+  
+  .row:hover {
+    transform: translateX(0);
+  }
+  
+  input[type="number"] {
+    width: 60px;
+    font-size: 16px;
+    padding: 8px;
+  }
+  
+  .btn-qty {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+  
+  .counter {
+    padding: 8px 15px;
+    font-size: 12px;
+  }
+  
+  .tab {
+    padding: 12px 10px;
+    font-size: 14px;
+  }
+  
+  .dataTable th,
+  .dataTable td {
+    padding: 8px;
+    font-size: 13px;
+  }
+}
 </style>
 </head>
 
 <body>
 
-<img src="icon.png" class="logo">
-
-<h1>BAMBINO CPU</h1>
-
-<div id="todayDate" class="date"></div>
-
-<div class="tab-buttons">
-<button onclick="showTab('form')">Stock Form</button>
-<button onclick="showTab('stock')">Stock Level</button>
-<button onclick="showTab('prod')">Tomorrow's Production</button>
-<button onclick="showTab('purchase')">Recommended Purchase</button>
+<div class="container">
+  <img src="icon.png" class="logo" alt="Bambino Pizza">
+  
+  <h1>🍕 BAMBINO CPU</h1>
+  
+  <div id="todayDate" class="date"></div>
+  
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button class="tab" onclick="showTab('form')">📝 Stock Form</button>
+    <button class="tab" onclick="showTab('stock')">📊 Stock Level</button>
+    <button class="tab" onclick="showTab('prod')">📈 Production</button>
+    <button class="tab" onclick="showTab('purchase')">🛒 Purchase</button>
+  </div>
+  
+  <!-- Tab Content Container -->
+  <div id="tabContent" class="tab-content active"></div>
+  
+  <div class="note">
+    ⚠️ Verify all quantities before submitting
+  </div>
 </div>
 
-<div id="tab"></div>
-
 <script>
+const URL = "https://script.google.com/macros/s/AKfycbxOkG1NhG8nCPNc04kNpAmK1m3BGJorHCpCKvFkhLZghQ2T1HHUWq3G9DGX1taks6cy/exec";
 
-const URL="https://script.google.com/macros/s/AKfycbyhEMh2GCCSz-bDB6SF51B7yxKbt4RuvT5Kz769JmTlvWMed2MdqKV6phw13Ym8GSB_ow/exec";
+document.getElementById("todayDate").innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
-document.getElementById("todayDate").innerText =
-new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
-
-/* TABS */
-
-function showTab(t){
-  document.getElementById("tab").innerHTML="";
-  if(t==="form") loadForm();
-  if(t==="stock") loadStock();
-  if(t==="prod") loadProduction();
-  if(t==="purchase") loadPurchase();
+// Tab management
+function setActiveTab(tabName) {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  const tabs = document.querySelectorAll('.tab');
+  const tabMap = { 'form': 0, 'stock': 1, 'prod': 2, 'purchase': 3 };
+  if (tabs[tabMap[tabName]]) {
+    tabs[tabMap[tabName]].classList.add('active');
+  }
 }
 
-/* FORM */
+function showTab(tabName) {
+  setActiveTab(tabName);
+  
+  if (tabName === "form") loadForm();
+  if (tabName === "stock") loadStock();
+  if (tabName === "prod") loadProduction();
+  if (tabName === "purchase") loadPurchase();
+}
 
-async function loadForm(){
-
-  const r = await fetch(URL+"?action=getIngredients");
+// FORM
+async function loadForm() {
+  const r = await fetch(URL + "?action=getIngredients");
   const data = await r.json();
 
-  const tab=document.getElementById("tab");
-  tab.innerHTML = ""; // limpiar tab
+  const tab = document.getElementById("tabContent");
+  tab.innerHTML = "";
 
-  const container=document.createElement("div");
-  container.id="formRows";
+  const container = document.createElement("div");
+  container.className = "items-grid";
+  container.id = "formRows";
 
-  /* RESTAURAR ULTIMO SUBMIT SI EXISTE */
+  // Check for saved submission
   const last = localStorage.getItem("lastStockSubmit");
-  if(last){
+  const isLocked = last && !JSON.parse(last).completed;
+
+  if (last) {
     const lastData = JSON.parse(last);
-
-    // BOTON NEW STOCK arriba
-    const newBtn=document.createElement("button");
-    newBtn.id="newStockBtn";
-    newBtn.innerText="NEW STOCK";
-    newBtn.onclick=()=> {
-      localStorage.removeItem("lastStockSubmit");
-      loadForm();
+    
+    // New Stock button
+    const newBtn = document.createElement("button");
+    newBtn.className = "btn-secondary";
+    newBtn.innerText = "🔄 NEW STOCK";
+    newBtn.onclick = () => {
+      if (confirm("Start a new stock submission? Current data will be cleared.")) {
+        localStorage.removeItem("lastStockSubmit");
+        loadForm();
+      }
     };
+    tab.appendChild(newBtn);
 
-    const newBtnContainer=document.createElement("div");
-    newBtnContainer.style.textAlign="center";
-    newBtnContainer.style.marginBottom="5px";
-    newBtnContainer.appendChild(newBtn);
-    tab.appendChild(newBtnContainer);
-
-    // INFO BOX debajo del NEW STOCK
+    // Last submission info
     const lastUpdateDiv = document.createElement("div");
-    lastUpdateDiv.className="infoBox";
+    lastUpdateDiv.className = "last-submission-info";
     const lastTime = new Date(lastData.time || Date.now());
-    lastUpdateDiv.innerHTML = `Last Update at <span style="color:black;">${lastTime.toLocaleDateString('en-GB')} ${lastTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>`;
+    lastUpdateDiv.innerHTML = `📋 Last update: ${lastTime.toLocaleDateString('en-GB')} at ${lastTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} by ${lastData.chef || 'Unknown'}`;
     tab.appendChild(lastUpdateDiv);
   }
 
-  // INPUT CHEF name arriba del formulario
-  const topControls = document.createElement("div");
-  topControls.id="topControls";
-  topControls.innerHTML = `<input id="chefName" placeholder="Chef name">`;
-  tab.appendChild(topControls);
-
-  // rellenar input si existía submit
-  if(last){
-    const lastData = JSON.parse(last);
-    document.getElementById("chefName").value = lastData.chef;
-  }
+  // Chef name input
+  const userSection = document.createElement("div");
+  userSection.className = "user-section";
+  userSection.innerHTML = `
+    <label class="user-label">👨‍🍳 Chef Name:</label>
+    <input type="text" id="chefName" class="user-input" placeholder="Enter your name" autocomplete="off">
+  `;
+  tab.appendChild(userSection);
 
   tab.appendChild(container);
 
-  /* SEPARAR CATEGORIAS */
+  // Separate categories
+  const dry = data.filter(i => i.category === "Dry Store");
+  const cold = data.filter(i => i.category === "Cold Room");
 
-  const dry = data.filter(i=>i.category==="Dry Store");
-  const cold = data.filter(i=>i.category==="Cold Room");
+  function renderGroup(title, items) {
+    if (items.length === 0) return;
 
-  function renderGroup(title, items){
-    if(items.length===0) return;
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "categoryTitle";
+    titleDiv.innerText = title;
+    container.appendChild(titleDiv);
 
-    const t=document.createElement("div");
-    t.className="categoryTitle";
-    t.innerText=title;
-    container.appendChild(t);
-
-    items.forEach(i=>{
-      const row=document.createElement("div");
-      row.className="row";
-      row.innerHTML=`
+    items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "row";
+      const itemId = item.name.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      let savedValue = '';
+      if (isLocked && last) {
+        const lastData = JSON.parse(last);
+        const savedItem = lastData.data.find(d => d.name === item.name);
+        if (savedItem) savedValue = savedItem.qty;
+      }
+      
+      row.innerHTML = `
         <div class="ingredientContainer">
-          <div class="ingredient">${i.name}</div>
-          <div class="unit">${i.unit||""}</div>
+          <div class="ingredient">${item.name}</div>
+          <div class="unit">${item.unit || ""}</div>
         </div>
-        <button onclick="change('${i.name}',-1)">-</button>
-        <input id="${i.name}" type="number">
-        <button onclick="change('${i.name}',1)">+</button>
+        <button class="btn-qty" onclick="changeQuantity('${itemId}', -1)">−</button>
+        <input type="number" id="${itemId}" data-item-name="${item.name}" min="0" placeholder="0" value="${savedValue}" ${isLocked ? 'disabled' : ''}>
+        <button class="btn-qty" onclick="changeQuantity('${itemId}', 1)" ${isLocked ? 'disabled' : ''}>+</button>
       `;
       container.appendChild(row);
     });
   }
 
-  renderGroup("Dry Store", dry);
-  renderGroup("Cold Room", cold);
+  renderGroup("📦 Dry Store", dry);
+  renderGroup("❄️ Cold Room", cold);
 
-  /* SUBMIT */
+  // Submit button
+  const submitBtn = document.createElement("button");
+  submitBtn.id = "submitStockBtn";
+  submitBtn.className = "btn-primary";
+  submitBtn.innerText = "📤 SUBMIT STOCK";
+  submitBtn.onclick = submitStock;
+  tab.appendChild(submitBtn);
 
-  const submit=document.createElement("button");
-  submit.id="submitStockBtn";
-  submit.innerText="SUBMIT";
-  submit.onclick=submitStock;
-  tab.appendChild(submit);
-
-  // bloquear inputs si existía submit
-  if(last){
+  if (isLocked) {
     const lastData = JSON.parse(last);
-    lastData.data.forEach(d=>{
-      const input = document.getElementById(d.name);
-      if(input) input.value = d.qty;
-    });
-    document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
-      el.disabled=true;
-    });
-    document.getElementById("submitStockBtn").disabled=true;
+    document.getElementById("chefName").value = lastData.chef || '';
+    document.getElementById("chefName").disabled = true;
+    submitBtn.disabled = true;
+  } else {
+    document.getElementById("chefName").focus();
   }
-
 }
 
-/* CHANGE */
-
-function change(id,v){
-  let i=document.getElementById(id);
-  let val=Number(i.value)||0;
-  val+=v;
-  if(val<0) val=0;
-  i.value=val;
+function changeQuantity(id, delta) {
+  const input = document.getElementById(id);
+  if (!input || input.disabled) return;
+  
+  let current = parseInt(input.value) || 0;
+  current = Math.max(0, current + delta);
+  input.value = current || '';
 }
 
-/* SUBMIT */
-
-async function submitStock(){
-
-  const chef=document.getElementById("chefName").value;
-  if(!chef){
-    alert("Chef name required");
+async function submitStock() {
+  const chef = document.getElementById("chefName").value.trim();
+  if (!chef) {
+    showStatus("Chef name is required");
+    document.getElementById("chefName").focus();
     return;
   }
 
-  const inputs=document.querySelectorAll(".row input");
+  const inputs = document.querySelectorAll("#formRows input[type='number']");
   let allFilled = true;
-  inputs.forEach(i=>{
-    if(i.value==="" || Number(i.value)<=0) allFilled=false;
+  inputs.forEach(input => {
+    if (input.value === "" || parseInt(input.value) < 0) allFilled = false;
   });
 
-  if(!allFilled){
-    alert("All the boxes must be filled in.");
+  if (!allFilled) {
+    showStatus("Please fill in all quantities (use 0 if needed)", true);
     return;
   }
 
-  if(!confirm("Are you sure Chef?")) return;
+  const totalItems = Array.from(inputs).reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+  
+  if (!confirm(`Confirm stock submission?\n\nChef: ${chef}\nTotal items: ${totalItems}`)) return;
 
-  document.querySelectorAll("#formRows input,#formRows button,#chefName").forEach(el=>{
-    el.disabled=true;
+  // Lock form
+  document.querySelectorAll("#formRows input, #formRows .btn-qty, #chefName").forEach(el => {
+    el.disabled = true;
   });
 
-  document.getElementById("submitStockBtn").disabled=true;
+  const submitBtn = document.getElementById("submitStockBtn");
+  submitBtn.disabled = true;
+  submitBtn.classList.add("loading");
 
-  let data=[];
-  inputs.forEach(i=>{
-    data.push({name:i.id,qty:Number(i.value)});
+  let data = [];
+  inputs.forEach(input => {
+    data.push({ name: input.dataset.itemName, qty: parseInt(input.value) || 0 });
   });
 
-  await fetch(URL+"?action=submitStock&chef="+chef+"&data="+encodeURIComponent(JSON.stringify(data)));
-
-  // Guardar en localStorage con fecha
-  localStorage.setItem("lastStockSubmit", JSON.stringify({chef:chef,data:data,time:Date.now()}));
-
-  alert("Submitted");
-
-  loadForm(); // recarga la tab para mostrar NEW STOCK y Last update
+  try {
+    await fetch(URL + "?action=submitStock&chef=" + encodeURIComponent(chef) + "&data=" + encodeURIComponent(JSON.stringify(data)));
+    
+    const submission = {
+      chef: chef,
+      data: data,
+      time: Date.now(),
+      completed: true
+    };
+    localStorage.setItem("lastStockSubmit", JSON.stringify(submission));
+    
+    showStatus(`✅ Stock submitted successfully by ${chef}!`, false);
+    loadForm(); // Reload to show new stock button
+  } catch (error) {
+    console.error("Error submitting stock:", error);
+    showStatus("❌ Error submitting data. Please check your connection.", true);
+    // Unlock form on error
+    document.querySelectorAll("#formRows input, #formRows .btn-qty, #chefName").forEach(el => {
+      el.disabled = false;
+    });
+    submitBtn.disabled = false;
+    submitBtn.classList.remove("loading");
+  }
 }
 
-/* RESTO IGUAL */
-
-async function loadStock(){ /* igual que antes */ 
-  const r=await fetch(URL+"?action=getCurrentStock");
-  const d=await r.json();
-
-  const date=new Date(d.lastDate);
-  const formatted=date.toLocaleDateString('en-GB')+" "+
-  date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-
-  let out=0, low=0, good=0;
-
-  d.rows.forEach(r=>{
-    const s=r.status.toLowerCase();
-    if(s.includes("out")) out++;
-    else if(s.includes("low")) low++;
-    else good++;
-  });
-
-  d.rows.sort((a,b)=>{
-    function rank(s){
-      s=s.status.toLowerCase();
-      if(s.includes("out")) return 1;
-      if(s.includes("low")) return 2;
-      return 3;
+function showStatus(message, isError = false) {
+  let statusDiv = document.getElementById("dynamicStatus");
+  if (!statusDiv) {
+    statusDiv = document.createElement("div");
+    statusDiv.id = "dynamicStatus";
+    statusDiv.className = "status-message";
+    const tab = document.getElementById("tabContent");
+    tab.appendChild(statusDiv);
+  }
+  
+  statusDiv.innerText = message;
+  statusDiv.className = `status-message ${isError ? 'error' : ''}`;
+  statusDiv.style.display = "block";
+  
+  setTimeout(() => {
+    if (statusDiv.style.display === "block") {
+      statusDiv.style.display = "none";
     }
-    return rank(a)-rank(b);
-  });
+  }, 5000);
+}
 
-  let html=`
-  <div class="infoBox">
-  Stock Level At <b>${formatted}</b>
-  </div>
+// STOCK LEVEL
+async function loadStock() {
+  const tab = document.getElementById("tabContent");
+  tab.innerHTML = '<div style="text-align: center; padding: 40px;">Loading...</div>';
+  
+  try {
+    const r = await fetch(URL + "?action=getCurrentStock");
+    const d = await r.json();
 
-  <div class="counterRow">
-  <div class="counter red">🔴 ${out} Out of Stock</div>
-  <div class="counter yellow">🟡 ${low} Low Stock</div>
-  <div class="counter green">🟢 ${good} Good Stock</div>
-  </div>
+    const date = new Date(d.lastDate);
+    const formatted = date.toLocaleDateString('en-GB') + " " + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-  <table class="dataTable">
-  <tr>
-  <th>Prep</th>
-  <th>Stock</th>
-  <th>Par</th>
-  <th>Status</th>
-  </tr>
-  `;
+    let out = 0, low = 0, good = 0;
 
-  d.rows.forEach(r=>{
-    let cls="good";
-    const s=r.status.toLowerCase();
-    if(s.includes("out")) cls="out";
-    else if(s.includes("low")) cls="low";
+    d.rows.forEach(r => {
+      const s = r.status.toLowerCase();
+      if (s.includes("out")) out++;
+      else if (s.includes("low")) low++;
+      else good++;
+    });
 
-    let icon="🟢";
-    if(cls==="out") icon="🔴";
-    if(cls==="low") icon="🟡";
+    d.rows.sort((a, b) => {
+      function rank(s) {
+        s = s.status.toLowerCase();
+        if (s.includes("out")) return 1;
+        if (s.includes("low")) return 2;
+        return 3;
+      }
+      return rank(a) - rank(b);
+    });
 
-    html+=`
-    <tr>
-    <td class="prep">${r.prep}</td>
-    <td>${r.stock}</td>
-    <td>${r.par}</td>
-    <td><span class="status ${cls}">${icon} ${r.status}</span></td>
-    </tr>
+    let html = `
+      <div class="infoBox">
+        📊 Stock Level at <strong>${formatted}</strong>
+      </div>
+
+      <div class="counterRow">
+        <div class="counter red">🔴 ${out} Out of Stock</div>
+        <div class="counter yellow">🟡 ${low} Low Stock</div>
+        <div class="counter green">🟢 ${good} Good Stock</div>
+      </div>
+
+      <table class="dataTable">
+        <thead>
+          <tr>
+            <th>Prep Item</th>
+            <th>Stock</th>
+            <th>Par Level</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
     `;
-  });
 
-  html+="</table>";
-  document.getElementById("tab").innerHTML=html;
+    d.rows.forEach(r => {
+      let cls = "good";
+      const s = r.status.toLowerCase();
+      if (s.includes("out")) cls = "out";
+      else if (s.includes("low")) cls = "low";
+
+      let icon = "🟢";
+      if (cls === "out") icon = "🔴";
+      if (cls === "low") icon = "🟡";
+
+      html += `
+        <tr>
+          <td class="prep">${r.prep}</td>
+          <td>${r.stock}</td>
+          <td>${r.par}</td>
+          <td><span class="status ${cls}">${icon} ${r.status}</span></td>
+        </tr>
+      `;
+    });
+
+    html += `
+        </tbody>
+      </table>
+    `;
+    
+    tab.innerHTML = html;
+  } catch (error) {
+    console.error("Error loading stock:", error);
+    tab.innerHTML = '<div class="status-message error">❌ Error loading stock data. Please refresh.</div>';
+  }
 }
 
-async function loadProduction(){ /* igual que antes */
-  const r=await fetch(URL+"?action=getTomorrowProduction");
-  const data = await r.json();
+// PRODUCTION
+async function loadProduction() {
+  const tab = document.getElementById("tabContent");
+  tab.innerHTML = '<div style="text-align: center; padding: 40px;">Loading...</div>';
+  
+  try {
+    const r = await fetch(URL + "?action=getTomorrowProduction");
+    const data = await r.json();
 
-  let html=`<table class="dataTable">
-  <tr><th>Prep</th><th>Quantity</th><th>Unit</th></tr>`;
+    let html = `
+      <div class="infoBox">
+        📈 Production needed for tomorrow
+      </div>
+      <table class="dataTable">
+        <thead>
+          <tr>
+            <th>Prep Item</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-  data.forEach(r=>{
-    let qty=parseFloat(String(r.qty).replace(",",".")); 
-    if(qty>0){
-      html+=`<tr>
-      <td class="prep">${r.prep}</td>
-      <td>${Math.round(qty)}</td>
-      <td>${r.unit}</td>
-      </tr>`;
-    }
-  });
+    data.forEach(r => {
+      let qty = parseFloat(String(r.qty).replace(",", "."));
+      if (qty > 0) {
+        html += `
+          <tr>
+            <td class="prep">${r.prep}</td>
+            <td><strong>${Math.round(qty)}</strong></td>
+            <td>${r.unit}</td>
+          </tr>
+        `;
+      }
+    });
 
-  html+="</table>";
-  document.getElementById("tab").innerHTML=html;
+    html += `
+        </tbody>
+      </table>
+    `;
+    
+    tab.innerHTML = html;
+  } catch (error) {
+    console.error("Error loading production:", error);
+    tab.innerHTML = '<div class="status-message error">❌ Error loading production data. Please refresh.</div>';
+  }
 }
 
-async function loadPurchase(){ /* igual que antes */
-  const r = await fetch(URL+"?action=getRecommendedPurchase");
-  const data = await r.json();
+// PURCHASE
+async function loadPurchase() {
+  const tab = document.getElementById("tabContent");
+  tab.innerHTML = '<div style="text-align: center; padding: 40px;">Loading...</div>';
+  
+  try {
+    const r = await fetch(URL + "?action=getRecommendedPurchase");
+    const data = await r.json();
 
-  let html=`<table class="dataTable">
-  <tr><th>Ingredient</th><th>Quantity</th><th>Unit</th></tr>`;
+    let html = `
+      <div class="infoBox">
+        🛒 Recommended purchase order
+      </div>
+      <table class="dataTable">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Quantity to Order</th>
+            <th>Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-  data.forEach(r=>{
-    html+=`<tr>
-    <td class="prep">${r.ingredient}</td>
-    <td>${r.qty}</td>
-    <td>${r.unit}</td>
-    </tr>`;
-  });
+    data.forEach(r => {
+      html += `
+        <tr>
+          <td class="prep">${r.ingredient}</td>
+          <td><strong>${r.qty}</strong></td>
+          <td>${r.unit}</td>
+        </tr>
+      `;
+    });
 
-  html+="</table>";
-  document.getElementById("tab").innerHTML=html;
+    html += `
+        </tbody>
+      </table>
+    `;
+    
+    tab.innerHTML = html;
+  } catch (error) {
+    console.error("Error loading purchase:", error);
+    tab.innerHTML = '<div class="status-message error">❌ Error loading purchase data. Please refresh.</div>';
+  }
 }
 
+// Initialize with form tab active
+showTab('form');
 </script>
 
 </body>
