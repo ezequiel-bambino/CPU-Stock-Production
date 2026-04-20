@@ -59,19 +59,19 @@ h1 {
 /* Tabs Styles */
 .tabs {
   display: flex;
-  gap: 10px;
+  gap: 5px;
   margin-bottom: 30px;
   border-bottom: 2px solid #e0e0e0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .tab {
   flex: 1;
-  min-width: 80px;
-  padding: 15px 20px;
+  min-width: 0;
+  padding: 12px 8px;
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #666;
   cursor: pointer;
@@ -79,6 +79,14 @@ h1 {
   border-radius: 8px 8px 0 0;
   position: relative;
   bottom: -2px;
+  white-space: nowrap;
+}
+
+@media (min-width: 500px) {
+  .tab {
+    font-size: 16px;
+    padding: 15px 20px;
+  }
 }
 
 .tab:hover {
@@ -512,11 +520,6 @@ input[type="number"] {
     font-size: 12px;
   }
   
-  .tab {
-    padding: 12px 10px;
-    font-size: 14px;
-  }
-  
   .dataTable th,
   .dataTable td {
     padding: 8px;
@@ -537,10 +540,10 @@ input[type="number"] {
   
   <!-- Tabs Navigation -->
   <div class="tabs">
-    <button class="tab" onclick="showTab('form')">📝 Stock Form</button>
-    <button class="tab" onclick="showTab('stock')">📊 Stock Level</button>
-    <button class="tab" onclick="showTab('prod')">📈 Production</button>
-    <button class="tab" onclick="showTab('purchase')">🛒 Purchase</button>
+    <button class="tab" onclick="showTab('form')">📝 Stock</button>
+    <button class="tab" onclick="showTab('stock')">📊 Level</button>
+    <button class="tab" onclick="showTab('prod')">📈 Prod</button>
+    <button class="tab" onclick="showTab('purchase')">🛒 Buy</button>
   </div>
   
   <!-- Tab Content Container -->
@@ -932,9 +935,9 @@ async function loadProduction() {
       </table>
     `;
 
-    // Add PDF download button that opens in new window
+    // Add PDF download button that opens in a new tab without leaving the app
     html += `
-      <button class="btn-pdf" onclick="window.open('about:blank', '_blank').document.write('<html><head><title>BAMBINO CPU - PDF Report</title></head><body style=\\'font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;\\'><div style=\\'text-align: center;\\'><h2 style=\\'color: #e63946;\\'>📄 Generating PDF Report...</h2><p>Your download will start automatically.</p><p style=\\'color: #666;\\'>You can close this window after the download starts.</p></div></body></html>'); setTimeout(() => downloadProductionPDFInNewWindow(), 500)">
+      <button class="btn-pdf" onclick="generateAndDownloadPDF()">
         📄 Download Production Report (PDF)
       </button>
     `;
@@ -946,8 +949,14 @@ async function loadProduction() {
   }
 }
 
-// PDF Generation Function for new window
-async function downloadProductionPDFInNewWindow() {
+// PDF Generation Function - Opens in new tab
+async function generateAndDownloadPDF() {
+  const btn = document.querySelector('.btn-pdf');
+  if (!btn) return;
+  
+  btn.classList.add('loading');
+  btn.innerHTML = '⏳ Generating PDF...';
+  
   try {
     // Ensure we have stock data
     if (!currentStockData) {
@@ -992,114 +1001,200 @@ async function downloadProductionPDFInNewWindow() {
       return statusPriority(a[3]) - statusPriority(b[3]);
     });
     
-    // Create PDF using jsPDF
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    // Open new window with PDF generation
+    const pdfWindow = window.open('', '_blank');
     
-    // Add header
-    const dateStr = new Date().toLocaleDateString('en-GB', { 
-      weekday: 'long', 
-      day: '2-digit', 
-      month: 'long', 
-      year: 'numeric' 
-    });
+    // Write loading message to new window
+    pdfWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>BAMBINO CPU - Production Report</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+          }
+          .loading-container {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          h2 {
+            color: #e63946;
+            margin-bottom: 20px;
+          }
+          .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #e63946;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="loading-container">
+          <h2>📄 Generating PDF Report...</h2>
+          <div class="spinner"></div>
+          <p style="color: #666; margin-top: 20px;">Your download will start automatically.</p>
+          <p style="color: #999; font-size: 14px;">You can close this window after the download starts.</p>
+        </div>
+      </body>
+      </html>
+    `);
+    pdfWindow.document.close();
     
-    doc.setFontSize(20);
-    doc.setTextColor(230, 57, 70);
-    doc.text('BAMBINO CPU', 14, 20);
+    // Load jsPDF in the new window
+    const script = pdfWindow.document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    pdfWindow.document.head.appendChild(script);
     
-    doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Production & Stock Report', 14, 30);
-    doc.text(dateStr, 14, 38);
+    const script2 = pdfWindow.document.createElement('script');
+    script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+    pdfWindow.document.head.appendChild(script2);
     
-    // Calculate counters for summary
-    let outCount = 0, lowCount = 0, goodCount = 0;
-    tableData.forEach(row => {
-      const status = row[3].toLowerCase();
-      if (status.includes('out')) outCount++;
-      else if (status.includes('low')) lowCount++;
-      else goodCount++;
-    });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(80, 80, 80);
-    doc.text(`Summary: ${outCount} Out of Stock | ${lowCount} Low Stock | ${goodCount} Good Stock`, 14, 48);
-    
-    // Create table using autoTable
-    doc.autoTable({
-      startY: 55,
-      head: [[
-        'Prep Item', 
-        'Current Stock', 
-        'Par Level', 
-        'Status', 
-        'Quantity to Produce'
-      ]],
-      body: tableData,
-      headStyles: {
-        fillColor: [230, 57, 70],
-        textColor: 255,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto', fontStyle: 'bold' },
-        1: { halign: 'center' },
-        2: { halign: 'center' },
-        3: { halign: 'center' },
-        4: { halign: 'center' }
-      },
-      styles: {
-        fontSize: 9,
-        cellPadding: 4
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250]
-      },
-      didParseCell: function(data) {
-        // Color status cells
-        if (data.column.index === 3 && data.cell.raw) {
-          const status = data.cell.raw.toLowerCase();
-          if (status.includes('out')) {
-            data.cell.styles.textColor = [198, 40, 40];
+    // Wait for scripts to load then generate PDF
+    setTimeout(() => {
+      const { jsPDF } = pdfWindow.jspdf;
+      const doc = new jsPDF();
+      
+      // Add header
+      const dateStr = new Date().toLocaleDateString('en-GB', { 
+        weekday: 'long', 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      doc.setFontSize(20);
+      doc.setTextColor(230, 57, 70);
+      doc.text('BAMBINO CPU', 14, 20);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Production & Stock Report', 14, 30);
+      doc.text(dateStr, 14, 38);
+      
+      // Calculate counters for summary
+      let outCount = 0, lowCount = 0, goodCount = 0;
+      tableData.forEach(row => {
+        const status = row[3].toLowerCase();
+        if (status.includes('out')) outCount++;
+        else if (status.includes('low')) lowCount++;
+        else goodCount++;
+      });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Summary: ${outCount} Out of Stock | ${lowCount} Low Stock | ${goodCount} Good Stock`, 14, 48);
+      
+      // Create table using autoTable
+      doc.autoTable({
+        startY: 55,
+        head: [[
+          'Prep Item', 
+          'Current Stock', 
+          'Par Level', 
+          'Status', 
+          'Quantity to Produce'
+        ]],
+        body: tableData,
+        headStyles: {
+          fillColor: [230, 57, 70],
+          textColor: 255,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 'auto', fontStyle: 'bold' },
+          1: { halign: 'center' },
+          2: { halign: 'center' },
+          3: { halign: 'center' },
+          4: { halign: 'center' }
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 4
+        },
+        alternateRowStyles: {
+          fillColor: [248, 249, 250]
+        },
+        didParseCell: function(data) {
+          // Color status cells
+          if (data.column.index === 3 && data.cell.raw) {
+            const status = data.cell.raw.toLowerCase();
+            if (status.includes('out')) {
+              data.cell.styles.textColor = [198, 40, 40];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (status.includes('low')) {
+              data.cell.styles.textColor = [230, 81, 0];
+              data.cell.styles.fontStyle = 'bold';
+            } else {
+              data.cell.styles.textColor = [46, 125, 50];
+            }
+          }
+          // Highlight production quantities > 0
+          if (data.column.index === 4 && data.cell.raw !== '-' && data.cell.raw > 0) {
             data.cell.styles.fontStyle = 'bold';
-          } else if (status.includes('low')) {
-            data.cell.styles.textColor = [230, 81, 0];
-            data.cell.styles.fontStyle = 'bold';
-          } else {
-            data.cell.styles.textColor = [46, 125, 50];
+            data.cell.styles.textColor = [230, 57, 70];
           }
         }
-        // Highlight production quantities > 0
-        if (data.column.index === 4 && data.cell.raw !== '-' && data.cell.raw > 0) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = [230, 57, 70];
-        }
+      });
+      
+      // Add footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Page ${i} of ${pageCount} - Generated by BAMBINO CPU`, 
+          doc.internal.pageSize.getWidth() / 2, 
+          doc.internal.pageSize.getHeight() - 10, 
+          { align: 'center' }
+        );
       }
-    });
+      
+      // Save PDF
+      const fileName = `BAMBINO_Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      
+      // Update the window content to show success message
+      pdfWindow.document.body.innerHTML = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5;">
+          <div style="text-align: center; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #4caf50; margin-bottom: 20px;">✅ PDF Generated Successfully!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Your download should have started automatically.</p>
+            <p style="color: #999; font-size: 14px;">You can close this window and return to the app.</p>
+            <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #e63946; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Close Window</button>
+          </div>
+        </div>
+      `;
+      
+    }, 1000);
     
-    // Add footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Page ${i} of ${pageCount} - Generated by BAMBINO CPU`, 
-        doc.internal.pageSize.getWidth() / 2, 
-        doc.internal.pageSize.getHeight() - 10, 
-        { align: 'center' }
-      );
-    }
-    
-    // Save PDF
-    const fileName = `BAMBINO_Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
+    btn.classList.remove('loading');
+    btn.innerHTML = '📄 Download Production Report (PDF)';
     
   } catch (error) {
     console.error('Error generating PDF:', error);
-    alert('Error generating PDF. Please try again.');
+    btn.classList.remove('loading');
+    btn.innerHTML = '📄 Download Production Report (PDF)';
+    showStatus('❌ Error generating PDF. Please try again.', true);
   }
 }
 
