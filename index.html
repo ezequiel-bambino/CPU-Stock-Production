@@ -3,6 +3,9 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>BAMBINO CPU - Kitchen Management</title>
+<!-- jsPDF library for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 * {
@@ -59,10 +62,12 @@ h1 {
   gap: 10px;
   margin-bottom: 30px;
   border-bottom: 2px solid #e0e0e0;
+  flex-wrap: wrap;
 }
 
 .tab {
   flex: 1;
+  min-width: 80px;
   padding: 15px 20px;
   background: none;
   border: none;
@@ -311,6 +316,33 @@ input[type="number"] {
   transform: translateY(-2px);
 }
 
+.btn-pdf {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  background: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-pdf:hover {
+  background: #1a202c;
+  transform: translateY(-2px);
+}
+
+.btn-pdf.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .btn-back {
   width: 100%;
   padding: 12px;
@@ -515,7 +547,11 @@ input[type="number"] {
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbxOkG1NhG8nCPNc04kNpAmK1m3BGJorHCpCKvFkhLZghQ2T1HHUWq3G9DGX1taks6cy/exec";
+const URL = "https://script.google.com/macros/s/AKfycbxzpo9youYk-jrRbC0Kvm3m8dAtpGfDX0njzjoeJbQJDlLTZA6RUnDriucFx6jjDuY/exec";
+
+// Global variables for PDF data
+let currentStockData = null;
+let currentProductionData = null;
 
 document.getElementById("todayDate").innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -555,7 +591,7 @@ async function loadForm() {
 
   // Check for saved submission
   const last = localStorage.getItem("lastStockSubmit");
-  const isLocked = last && !JSON.parse(last).completed;
+  const isLocked = last && JSON.parse(last).completed;
 
   if (last) {
     const lastData = JSON.parse(last);
@@ -609,7 +645,7 @@ async function loadForm() {
       const itemId = item.name.replace(/[^a-zA-Z0-9]/g, '_');
       
       let savedValue = '';
-      if (isLocked && last) {
+      if (last) {
         const lastData = JSON.parse(last);
         const savedItem = lastData.data.find(d => d.name === item.name);
         if (savedItem) savedValue = savedItem.qty;
@@ -620,7 +656,7 @@ async function loadForm() {
           <div class="ingredient">${item.name}</div>
           <div class="unit">${item.unit || ""}</div>
         </div>
-        <button class="btn-qty" onclick="changeQuantity('${itemId}', -1)">−</button>
+        <button class="btn-qty" onclick="changeQuantity('${itemId}', -1)" ${isLocked ? 'disabled' : ''}>−</button>
         <input type="number" id="${itemId}" data-item-name="${item.name}" min="0" placeholder="0" value="${savedValue}" ${isLocked ? 'disabled' : ''}>
         <button class="btn-qty" onclick="changeQuantity('${itemId}', 1)" ${isLocked ? 'disabled' : ''}>+</button>
       `;
@@ -655,7 +691,7 @@ function changeQuantity(id, delta) {
   
   let current = parseInt(input.value) || 0;
   current = Math.max(0, current + delta);
-  input.value = current || '';
+  input.value = current || '0';
 }
 
 async function submitStock() {
@@ -749,6 +785,7 @@ async function loadStock() {
   try {
     const r = await fetch(URL + "?action=getCurrentStock");
     const d = await r.json();
+    currentStockData = d;
 
     const date = new Date(d.lastDate);
     const formatted = date.toLocaleDateString('en-GB') + " " + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -783,7 +820,7 @@ async function loadStock() {
         <div class="counter green">🟢 ${good} Good Stock</div>
       </div>
 
-      <table class="dataTable">
+      <table class="dataTable" id="stockTable">
         <thead>
           <tr>
             <th>Prep Item</th>
@@ -835,12 +872,13 @@ async function loadProduction() {
   try {
     const r = await fetch(URL + "?action=getTomorrowProduction");
     const data = await r.json();
+    currentProductionData = data;
 
     let html = `
       <div class="infoBox">
         📈 Production needed for tomorrow
       </div>
-      <table class="dataTable">
+      <table class="dataTable" id="productionTable">
         <thead>
           <tr>
             <th>Prep Item</th>
@@ -851,9 +889,11 @@ async function loadProduction() {
         <tbody>
     `;
 
+    let hasItems = false;
     data.forEach(r => {
       let qty = parseFloat(String(r.qty).replace(",", "."));
       if (qty > 0) {
+        hasItems = true;
         html += `
           <tr>
             <td class="prep">${r.prep}</td>
@@ -864,15 +904,202 @@ async function loadProduction() {
       }
     });
 
+    if (!hasItems) {
+      html += `
+        <tr>
+          <td colspan="3" style="text-align: center; padding: 30px; color: #666;">
+            No production needed for tomorrow
+          </td>
+        </tr>
+      `;
+    }
+
     html += `
         </tbody>
       </table>
+    `;
+
+    // Add PDF download button
+    html += `
+      <button class="btn-pdf" onclick="downloadProductionPDF()">
+        📄 Download Production Report (PDF)
+      </button>
     `;
     
     tab.innerHTML = html;
   } catch (error) {
     console.error("Error loading production:", error);
     tab.innerHTML = '<div class="status-message error">❌ Error loading production data. Please refresh.</div>';
+  }
+}
+
+// PDF Generation Function
+async function downloadProductionPDF() {
+  const btn = document.querySelector('.btn-pdf');
+  if (!btn) return;
+  
+  btn.classList.add('loading');
+  btn.innerHTML = '⏳ Generating PDF...';
+  
+  try {
+    // Ensure we have stock data
+    if (!currentStockData) {
+      const stockR = await fetch(URL + "?action=getCurrentStock");
+      currentStockData = await stockR.json();
+    }
+    
+    // Ensure we have production data
+    if (!currentProductionData) {
+      const prodR = await fetch(URL + "?action=getTomorrowProduction");
+      currentProductionData = await prodR.json();
+    }
+    
+    // Create a map of production quantities
+    const productionMap = {};
+    currentProductionData.forEach(item => {
+      let qty = parseFloat(String(item.qty).replace(",", "."));
+      productionMap[item.prep] = Math.round(qty);
+    });
+    
+    // Prepare table data combining stock and production info
+    const tableData = [];
+    currentStockData.rows.forEach(row => {
+      const prodQty = productionMap[row.prep] || 0;
+      tableData.push([
+        row.prep,
+        row.stock,
+        row.par,
+        row.status,
+        prodQty > 0 ? prodQty : '-'
+      ]);
+    });
+    
+    // Sort by status priority (Out of Stock first, then Low Stock)
+    tableData.sort((a, b) => {
+      const statusPriority = (status) => {
+        const s = status.toLowerCase();
+        if (s.includes('out')) return 1;
+        if (s.includes('low')) return 2;
+        return 3;
+      };
+      return statusPriority(a[3]) - statusPriority(b[3]);
+    });
+    
+    // Create PDF using jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Add header
+    const dateStr = new Date().toLocaleDateString('en-GB', { 
+      weekday: 'long', 
+      day: '2-digit', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    
+    doc.setFontSize(20);
+    doc.setTextColor(230, 57, 70);
+    doc.text('BAMBINO CPU', 14, 20);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Production & Stock Report', 14, 30);
+    doc.text(dateStr, 14, 38);
+    
+    // Calculate counters for summary
+    let outCount = 0, lowCount = 0, goodCount = 0;
+    tableData.forEach(row => {
+      const status = row[3].toLowerCase();
+      if (status.includes('out')) outCount++;
+      else if (status.includes('low')) lowCount++;
+      else goodCount++;
+    });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Summary: ${outCount} Out of Stock | ${lowCount} Low Stock | ${goodCount} Good Stock`, 14, 48);
+    
+    // Create table using autoTable
+    doc.autoTable({
+      startY: 55,
+      head: [[
+        'Prep Item', 
+        'Current Stock', 
+        'Par Level', 
+        'Status', 
+        'Quantity to Produce'
+      ]],
+      body: tableData,
+      headStyles: {
+        fillColor: [230, 57, 70],
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', fontStyle: 'bold' },
+        1: { halign: 'center' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
+        4: { halign: 'center' }
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250]
+      },
+      didParseCell: function(data) {
+        // Color status cells
+        if (data.column.index === 3 && data.cell.raw) {
+          const status = data.cell.raw.toLowerCase();
+          if (status.includes('out')) {
+            data.cell.styles.textColor = [198, 40, 40];
+            data.cell.styles.fontStyle = 'bold';
+          } else if (status.includes('low')) {
+            data.cell.styles.textColor = [230, 81, 0];
+            data.cell.styles.fontStyle = 'bold';
+          } else {
+            data.cell.styles.textColor = [46, 125, 50];
+          }
+        }
+        // Highlight production quantities > 0
+        if (data.column.index === 4 && data.cell.raw !== '-' && data.cell.raw > 0) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = [230, 57, 70];
+        }
+      }
+    });
+    
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Page ${i} of ${pageCount} - Generated by BAMBINO CPU`, 
+        doc.internal.pageSize.getWidth() / 2, 
+        doc.internal.pageSize.getHeight() - 10, 
+        { align: 'center' }
+      );
+    }
+    
+    // Save PDF
+    const fileName = `BAMBINO_Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    
+    btn.classList.remove('loading');
+    btn.innerHTML = '📄 Download Production Report (PDF)';
+    
+    showStatus('✅ PDF report downloaded successfully!', false);
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    btn.classList.remove('loading');
+    btn.innerHTML = '📄 Download Production Report (PDF)';
+    showStatus('❌ Error generating PDF. Please try again.', true);
   }
 }
 
@@ -900,15 +1127,29 @@ async function loadPurchase() {
         <tbody>
     `;
 
+    let hasItems = false;
     data.forEach(r => {
+      if (r.qty > 0) {
+        hasItems = true;
+        html += `
+          <tr>
+            <td class="prep">${r.ingredient}</td>
+            <td><strong>${r.qty}</strong></td>
+            <td>${r.unit}</td>
+          </tr>
+        `;
+      }
+    });
+
+    if (!hasItems) {
       html += `
         <tr>
-          <td class="prep">${r.ingredient}</td>
-          <td><strong>${r.qty}</strong></td>
-          <td>${r.unit}</td>
+          <td colspan="3" style="text-align: center; padding: 30px; color: #666;">
+            No purchase orders needed at this time
+          </td>
         </tr>
       `;
-    });
+    }
 
     html += `
         </tbody>
