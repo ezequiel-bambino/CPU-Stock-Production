@@ -472,6 +472,11 @@ input[type="number"] {
   text-align: center;
 }
 
+/* Hide note in purchase tab */
+.note.hidden-note {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   body {
@@ -541,7 +546,7 @@ input[type="number"] {
   <!-- Tab Content Container -->
   <div id="tabContent" class="tab-content active"></div>
   
-  <div class="note">
+  <div id="globalNote" class="note">
     ⚠️ Verify all quantities before submitting
   </div>
 </div>
@@ -565,6 +570,14 @@ function setActiveTab(tabName) {
   const tabMap = { 'form': 0, 'stock': 1, 'prod': 2, 'purchase': 3 };
   if (tabs[tabMap[tabName]]) {
     tabs[tabMap[tabName]].classList.add('active');
+  }
+  
+  // Hide/show global note based on tab
+  const globalNote = document.getElementById('globalNote');
+  if (tabName === 'purchase') {
+    globalNote.style.display = 'none';
+  } else {
+    globalNote.style.display = 'block';
   }
 }
 
@@ -919,9 +932,9 @@ async function loadProduction() {
       </table>
     `;
 
-    // Add PDF download button
+    // Add PDF download button that opens in new window
     html += `
-      <button class="btn-pdf" onclick="downloadProductionPDF()">
+      <button class="btn-pdf" onclick="window.open('about:blank', '_blank').document.write('<html><head><title>BAMBINO CPU - PDF Report</title></head><body style=\\'font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;\\'><div style=\\'text-align: center;\\'><h2 style=\\'color: #e63946;\\'>📄 Generating PDF Report...</h2><p>Your download will start automatically.</p><p style=\\'color: #666;\\'>You can close this window after the download starts.</p></div></body></html>'); setTimeout(() => downloadProductionPDFInNewWindow(), 500)">
         📄 Download Production Report (PDF)
       </button>
     `;
@@ -933,14 +946,8 @@ async function loadProduction() {
   }
 }
 
-// PDF Generation Function
-async function downloadProductionPDF() {
-  const btn = document.querySelector('.btn-pdf');
-  if (!btn) return;
-  
-  btn.classList.add('loading');
-  btn.innerHTML = '⏳ Generating PDF...';
-  
+// PDF Generation Function for new window
+async function downloadProductionPDFInNewWindow() {
   try {
     // Ensure we have stock data
     if (!currentStockData) {
@@ -1090,16 +1097,9 @@ async function downloadProductionPDF() {
     const fileName = `BAMBINO_Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
     
-    btn.classList.remove('loading');
-    btn.innerHTML = '📄 Download Production Report (PDF)';
-    
-    showStatus('✅ PDF report downloaded successfully!', false);
-    
   } catch (error) {
     console.error('Error generating PDF:', error);
-    btn.classList.remove('loading');
-    btn.innerHTML = '📄 Download Production Report (PDF)';
-    showStatus('❌ Error generating PDF. Please try again.', true);
+    alert('Error generating PDF. Please try again.');
   }
 }
 
@@ -1111,6 +1111,8 @@ async function loadPurchase() {
   try {
     const r = await fetch(URL + "?action=getRecommendedPurchase");
     const data = await r.json();
+    
+    console.log("Purchase data received:", data); // Debug log
 
     let html = `
       <div class="infoBox">
@@ -1128,18 +1130,27 @@ async function loadPurchase() {
     `;
 
     let hasItems = false;
-    data.forEach(r => {
-      if (r.qty > 0) {
-        hasItems = true;
-        html += `
-          <tr>
-            <td class="prep">${r.ingredient}</td>
-            <td><strong>${r.qty}</strong></td>
-            <td>${r.unit}</td>
-          </tr>
-        `;
-      }
-    });
+    
+    // Check if data is array and has items
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach(r => {
+        // Convert qty to number for comparison, handling comma decimal separator
+        let qty = parseFloat(String(r.qty).replace(",", "."));
+        
+        console.log(`Item: ${r.ingredient}, Qty: ${qty}, Unit: ${r.unit}`); // Debug log
+        
+        if (qty > 0) {
+          hasItems = true;
+          html += `
+            <tr>
+              <td class="prep">${r.ingredient}</td>
+              <td><strong>${r.qty}</strong></td>
+              <td>${r.unit}</td>
+            </tr>
+          `;
+        }
+      });
+    }
 
     if (!hasItems) {
       html += `
