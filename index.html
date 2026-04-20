@@ -540,9 +540,9 @@ input[type="number"] {
   
   <!-- Tabs Navigation -->
   <div class="tabs">
-    <button class="tab" onclick="showTab('form')">📝 Stock</button>
-    <button class="tab" onclick="showTab('stock')">📊 Level</button>
-    <button class="tab" onclick="showTab('prod')">📈 Prod</button>
+    <button class="tab" onclick="showTab('form')">📝 Form</button>
+    <button class="tab" onclick="showTab('stock')">📊 Stock Level</button>
+    <button class="tab" onclick="showTab('prod')">📈 Production</button>
     <button class="tab" onclick="showTab('purchase')">🛒 Buy</button>
   </div>
   
@@ -1134,23 +1134,25 @@ async function generateAndDownloadPDF() {
           fillColor: [248, 249, 250]
         },
         didParseCell: function(data) {
-          // Color status cells
-          if (data.column.index === 3 && data.cell.raw) {
-            const status = data.cell.raw.toLowerCase();
-            if (status.includes('out')) {
-              data.cell.styles.textColor = [198, 40, 40];
-              data.cell.styles.fontStyle = 'bold';
-            } else if (status.includes('low')) {
-              data.cell.styles.textColor = [230, 81, 0];
-              data.cell.styles.fontStyle = 'bold';
-            } else {
-              data.cell.styles.textColor = [46, 125, 50];
+          if (data.row.section === 'body') {
+            // Color status cells
+            if (data.column.index === 3 && data.cell.raw) {
+              const status = data.cell.raw.toLowerCase();
+              if (status.includes('out')) {
+                data.cell.styles.textColor = [198, 40, 40];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (status.includes('low')) {
+                data.cell.styles.textColor = [230, 81, 0];
+                data.cell.styles.fontStyle = 'bold';
+              } else {
+                data.cell.styles.textColor = [46, 125, 50];
+              }
             }
-          }
-          // Highlight production quantities > 0
-          if (data.column.index === 4 && data.cell.raw !== '-' && data.cell.raw > 0) {
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.textColor = [230, 57, 70];
+            // Highlight production quantities > 0
+            if (data.column.index === 4 && data.cell.raw !== '-' && data.cell.raw > 0) {
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.textColor = [230, 57, 70];
+            }
           }
         }
       });
